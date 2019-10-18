@@ -64,21 +64,105 @@ in order that the solution *"to be futureproof and expandable with new WordPress
 - High Availability
   - Availability Zones
   - The database will not be a single point of failure
-- Create "databases on the fly" (Good question about CI/CD second part) 
-
+- Create "databases on the fly" (Good question/cpncern to be addressesd in CI/CD second part?) 
+---
 **2. The Wordpress instances sites will be hosted and manage them by Azure Kubernetes Service to**:
+
+Note: Use kubernetes require to beard in mind some security concerns
 
 -  AKS cluster with Availability zones (*Preview feature, excluded from the service level agreements*)
    -  Distribute the AKS nodes in multiple zones 
       -  Aks cluster is able to tolerate a failure in one of those zones
    -  Nodes run across separate update and fault domains in a single Azure data center
+>Clusters with availability zones enabled require use of Azure Standard Load Balancers for distribution across zones. 
 
->Clusters with availability zones enabled require use of Azure Standard Load Balancers for distribution across zones
+
+- Scalability 
+  - Number of instances of a specific service or pod
+    - `replicas: x` on the `kind: Deployment` resource or `kubectl scale` command
+  - The aks nodes could be scaled (*Multiple VM nodes with specific OS configuration*)
+    - Manually using `az cli`
+    - Using cluster autoscaler (*currently in preview and excluded from the service level agreements and limited warranty*)
+- Applying namespace scope per customer
+  - Restrict the communication between namespaces 
+  - MySQL secrets by customers inside its own namespace.
+- Manage k8s networks policies between pods
+  - Define rules, which specific traffic is allowed to the selected pods
+    - Containers can talk to any other container in the network,
+    - Nodes in the cluster can talk to any other container in the network and vice-versa  
+
+> By default, pods are non-isolated; they accept traffic from any source
+> Each node in the cluster has a component called `kube-proxy` that is in charge of routing the traffic from anywhere in the cluster to the target Pod.
+Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy. 
+
+---
+
+**3. Vnet and two subnets**
+
+- Customer VNet
+  - MySQL subnet
+  - AKS subnet
+    - Keep in mind the communication with availability zones.
+     
+---
+
 
 ![alt text](https://cldup.com/H7LEvfWeKo.png "HA approach")
+
+
+#### Questions
+
+**1. Does WordPress instances (Wordpress pods inside AKS) need to communicate with the Internet?**
+  - Maybe not
+    - I can define a network policy in order to allow the pods to talk only to the MySQL subnet.
+  - Maybe yes
+    - Maybe I can define a rule that allows accessing to Internet only to install Wordpress plugins from admin dashboard. 
+
+Note: If the admin dashboard should be exposed to Internet, keep in mind protect their access.
+(Secure endpoint access with basic-auth (different to wordpress admin access application)
+   
+
+**2. In the definition of the problem/opportunity, the requirements says:**
+
+>The client is only interested in developing the WordPress sites from an application perspective. 
+They work using GIT repositories, and they have agreed to provide access to the application source code in one or more repositories.
+
+I am thinking to have access to these customer wordpress repositories solutions, so my questions here are:
+
+- **Do these repositories currently exist?**
+  - If yes, Can I have access to them?
+
+I ask that because maybe I could consider important to know the Wordpress code project structure, 
+and maybe according to it I can consider to create its own docker images; which lead me to the idea of having container registries repositories on azure. 
+**Yes one component more in the architecture**
+
+- **What kind of beside services are they using or specific fuctionalities do they have in the development wordpress sites process?**
+  - **Do we need to compose a set of those services?**
+    - MySQL is discarded to be part from an eventual `docker-compose.yml` becuase we are using it as a platform service
+    - We could use *docker compose* process to build and push all the website images 
+  - ** What about `Dockerfile` activities?**
+    - work dirs or fetch some other images
+    - Copy some directory or important startup project files?
+    - Launch some commands/entry points?
+    - Run some build process (php, or related technologies that they are using)
+ 
+Depending of the customer bussines logic and the functional requirements of the websites
+would be possible consider the following benefits when we build our own application docker images:
+- One container repository per wordpress website application portal
+  - Better control of the different versions of the Wordpress sites
+  - Improve the creation of artifacts and the release cadence in the CI/CD process
+  - Upgrading Wordpress version building the latest version from Dockerfile.
+    
+- **There are not wordpress application github repositories?**
+  - If no, I would need to assume that when we talk about Wordpress sites. I have to get them from somewhere
+
+
 
 
 ---
 # REFERENCES
 
 https://docs.microsoft.com/en-us/azure/aks/availability-zones
+https://docs.microsoft.com/en-us/azure/aks/scale-cluster
+https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler
+https://kubernetes.io/docs/concepts/services-networking/network-policies/
