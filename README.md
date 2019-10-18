@@ -182,6 +182,9 @@ I want to detail the design of the solution
 ![alt text](https://cldup.com/NBFVWcTdRd.jpg "HA second approach")
 
 
+![alt text](https://cldup.com/Rgch37Ljsm.jpeg "HA second approach")
+
+
 ---
 # REFERENCES
 
