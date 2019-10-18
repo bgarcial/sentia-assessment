@@ -169,7 +169,9 @@ would be possible consider the following benefits when we build our own applicat
 ---
 #### Getting into in the Deployment Architecture Desgin.
 
-According to the previous facts, assumptions and questions, I want to detail the design of the solution
+According to the previous facts, assumptions and questions,
+I want to detail the design of the solution 
+(Draft diagram ... of course. I have to create it from draw.io, it's just for illustrative purposes.)
 
 ![alt text](https://cldup.com/NBFVWcTdRd.jpg "HA second approach")
 
