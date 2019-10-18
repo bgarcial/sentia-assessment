@@ -23,7 +23,7 @@ Some of their websites have increased in popularity especially during certain ti
   - **5 additional sites wordpress instances - 5 additional databases?**
 
 First question that arise me: 
-  *Would we need to support 15 db in the short term?*
+  **Would we need to support 15 db in the short term?**
 
 ---
 ### To Do.
