@@ -46,14 +46,19 @@ Please provide a design for the designated architecture in either AWS or Azure. 
 #### Facts about current customer deployment infrastructure.
 
 - The customer already using 2 MySQL servers behind and HAProxy to achieve HA. 
-  So I would need to assure at least the same availability l
+  So I would need to assure at least the same availability 
   - There is  here an opportunity to take advance of the [Azure Service-Level Agreements](https://docs.microsoft.com/en-us/learn/modules/explore-azure-infrastructure/6-service-level-agreements) under the perspective of the resources that this approach solution will be use. 
 
 ---
 #### Initial Assumptions
 
-According to the customer requirements previously mentioned, the design considerations to keep in mind
-in order that the solution *"to be futureproof and expandable with new WordPress sites with minimal effort"* and the initial insights and question that arises to me; looks like I would need to create databases "on the fly". So I decided these initial considerations for the architecture.
+According to the customer requirements previously mentioned, the design considerations to keep in mind are:
+
+>*"to be futureproof and expandable with new WordPress sites with minimal effort"* 
+
+And the initial insights and question that arises to me; looks like I would need to create databases *"on the fly"* (I could be wrong). 
+
+So I decided these initial considerations for the architecture.
 
 **1. For MySQL databases Wordpress sites, I decided to use Azure SQL for MySQL as an external service to**:
 
@@ -64,7 +69,7 @@ in order that the solution *"to be futureproof and expandable with new WordPress
 - High Availability
   - Availability Zones
   - The database will not be a single point of failure
-- Create "databases on the fly" (Good question/cpncern to be addressesd in CI/CD second part?) 
+- Create "databases on the fly" (Good question/concern to be addressesd in CI/CD second part?) 
 ---
 **2. The Wordpress instances sites will be hosted and manage them by Azure Kubernetes Service to**:
 
@@ -95,6 +100,13 @@ Note: Use kubernetes require to beard in mind some security concerns
 > Each node in the cluster has a component called `kube-proxy` that is in charge of routing the traffic from anywhere in the cluster to the target Pod.
 Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy. 
 
+So, the points 1 and 2 are oriented to the HA that the customers already have and need improve.
+That's why, this first High level perspective approach HA diagram keeping in mind the MySQL and AKs contexts deployments
+
+
+![alt text](https://cldup.com/H7LEvfWeKo.png "HA approach")
+*Screenshot taken from Google maps*
+
 ---
 
 **3. Vnet and two subnets**
@@ -105,9 +117,6 @@ Once there is any NetworkPolicy in a namespace selecting a particular pod, that 
     - Keep in mind the communication with availability zones.
      
 ---
-
-
-![alt text](https://cldup.com/H7LEvfWeKo.png "HA approach")
 
 
 #### Questions
@@ -157,6 +166,12 @@ would be possible consider the following benefits when we build our own applicat
   - If no, I would need to assume that when we talk about Wordpress sites. I have to get them from somewhere
 
 
+---
+#### Getting into in the Deployment Architecture Desgin.
+
+According to the previous facts, assumptions and questions, I want to detail the design of the solution
+
+![alt text](https://cldup.com/NBFVWcTdRd.jpg "HA second approach")
 
 
 ---
