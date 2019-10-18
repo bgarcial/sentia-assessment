@@ -47,7 +47,7 @@ Please provide a design for the designated architecture in either AWS or Azure. 
 #### Facts about current customer deployment infrastructure.
 
 - The customer already using 2 MySQL servers behind and HAProxy to achieve HA. 
-  So I would need to assure at least the same availability 
+  So I would need to assure  and improve that availability 
   - There is  here an opportunity to take advance of the [Azure Service-Level Agreements](https://docs.microsoft.com/en-us/learn/modules/explore-azure-infrastructure/6-service-level-agreements) under the perspective of the resources that this approach solution will be use. 
 
 ---
