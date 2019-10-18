@@ -150,11 +150,12 @@ I ask that because maybe I could consider important to know the Wordpress code p
 and maybe according to it I can consider to create its own docker images; which lead me to the idea of having container registries repositories on azure. 
 **Yes one component more in the architecture**
 
-- **What kind of beside services are they using or specific fuctionalities do they have in the development wordpress sites process?**
+- **What kind of beside services are they using?**
+- **What kind of specific fuctionalities do they have in the development wordpress sites process?**
   - **Do we need to compose a set of those services?**
     - MySQL is discarded to be part from an eventual `docker-compose.yml` becuase we are using it as a platform service
-    - We could use *docker compose* process to build and push all the website images 
-  - ** What about `Dockerfile` activities?**
+    - We could use *docker compose* process to build and push all the website images from the CI pipeline 
+  - **What about `Dockerfile` activities?**
     - work dirs or fetch some other images
     - Copy some directory or important startup project files?
     - Launch some commands/entry points?
