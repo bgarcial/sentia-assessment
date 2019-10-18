@@ -7,7 +7,7 @@ This repository presents an approach and possibile alternatives to address the a
 ### Some facts
 
 - The customer is currently hosting 10 wordpress sites using wordpress multisite in a private datacenter.
-  - *(10 wordpress instances - 1 databases ?)*
+  - *(10 wordpress instances - How many databases in a multisite environment?)*
 - They achieve HA  by using 2 servers and having 2 copies of their multisite
 - They are using 2 MySQL servers behind HA proxy to achieve HA
 
@@ -18,8 +18,9 @@ Some of their websites have increased in popularity especially during certain ti
 
 #### Requirements 
 - So, the customer has decided to move away from wordpress multisites and have independent Wordpress applications
+  - **(10 wordpress instances - 1o databases?)**
 - They have 5 more sites in the making that will reach production in the next 12 months
-  - *5 additional sites wordpress instances - 5 additional databases?*
+  - **5 additional sites wordpress instances - 5 additional databases?**
 
 First question that arise me: 
   *Would we need to support 15 db in the short term?*
