@@ -18,7 +18,7 @@ Some of their websites have increased in popularity especially during certain ti
 
 #### Requirements 
 - So, the customer has decided to move away from wordpress multisites and have independent Wordpress applications
-  - **(10 wordpress instances - 1o databases?)**
+  - **(10 wordpress instances - 10 databases?)**
 - They have 5 more sites in the making that will reach production in the next 12 months
   - **5 additional sites wordpress instances - 5 additional databases?**
 
