@@ -179,10 +179,8 @@ According to the previous facts, assumptions and questions,
 I want to detail the design of the solution 
 (Draft diagram ... of course. I have to create it from draw.io, it's just for illustrative purposes.)
 
-![alt text](https://cldup.com/NBFVWcTdRd.jpg "HA second approach")
+![alt text](https://cldup.com/mzHgCU2i00.jpg "HA second approach")
 
-
-![alt text](https://cldup.com/Rgch37Ljsm.jpeg "HA second approach")
 
 
 ---
