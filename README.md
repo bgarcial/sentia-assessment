@@ -102,15 +102,19 @@ Note: Use kubernetes require to beard in mind some security concerns
 Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy. 
 
 So, the points 1 and 2 are oriented to the HA that the customers already have and need improve.
-That's why, this first High level perspective approach HA diagram keeping in mind the MySQL and AKs contexts deployments
+That's why, this first High level perspective approach HA diagram keeping in mind the MySQL and AKS contexts deployments
 
 
 ![alt text](https://cldup.com/H7LEvfWeKo.png "HA approach")
+
 *Screenshot taken from Google maps*
 
 ---
 
 **3. Vnet and two subnets**
+
+Is considered important to have control about connectivity in the solution in order to evaluate if is necessary design network address space or not. At the moment I consider Vnet and subnet creation, let's see what happen later.
+
 
 - Customer VNet
   - MySQL subnet
