@@ -194,11 +194,20 @@ Of this way, the wordpress sites will be easily scalable.
 
 ### Azure Kubernetes Service
 
-The Kubernetes cluster behavior will be detailed in a specific diagram, emphasizing of the following:
+The Kubernetes cluster general behavior emphasizing of the following:
 
 - Namespace separation per wordpress sites and beside apps like `cert-manager` and `nginx-ingress-controller`
+
 - Interaction between those components.
+- The Wordpress Helm chart represent each wordpress instance installed in a specific namespace for it.
+
   
+  
+
+
+![alt text](https://cldup.com/7Y2oxoUBYQ.png "HA second approach")  
+
+
 
 
 ---
