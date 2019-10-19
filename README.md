@@ -175,12 +175,30 @@ would be possible consider the following benefits when we build our own applicat
 ---
 #### Getting into in the Deployment Architecture Desgin.
 
-According to the previous facts, assumptions and questions,
-I want to detail the design of the solution 
-(Draft diagram ... of course. I have to create it from draw.io, it's just for illustrative purposes.)
+According to the previous facts, assumptions and questions, I have the first lanscape architecture diagram  
 
 ![alt text](https://cldup.com/URFClVdj-Q.jpg "HA second approach")
 
+The components are:
+
+- Availability zones 1 y 2 inside WE region
+- 1 Vnet across those availability zones (Logical component)
+- 2 Subnets across those availability zones (Logical component)
+  - AKS Subnet for Kubernetes cluster (Infrastructure service)
+  - MySQL Subnet for Azure Database for MySQL (Platform service)
+
+The wordpress service will be deployed as stateless application, it means *"do not store
+data or application state to the cluster or to persistent storage"*. That's why is used MySQL as platform as service. 
+
+Of this way, the wordpress sites will be easily scalable. 
+
+### Azure Kubernetes Service
+
+The Kubernetes cluster behavior will be detailed in a specific diagram, emphasizing of the following:
+
+- Namespace separation per wordpress sites and beside apps like `cert-manager` and `nginx-ingress-controller`
+- Interaction between those components.
+  
 
 
 ---
@@ -190,3 +208,4 @@ https://docs.microsoft.com/en-us/azure/aks/availability-zones
 https://docs.microsoft.com/en-us/azure/aks/scale-cluster
 https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler
 https://kubernetes.io/docs/concepts/services-networking/network-policies/
+https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps
