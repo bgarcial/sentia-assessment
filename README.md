@@ -200,12 +200,11 @@ The Kubernetes cluster general behavior emphasizing of the following:
 
 - Interaction between those components.
 - The Wordpress Helm chart represent each wordpress instance installed in a specific namespace for it.
-
-  
-  
+  - It will be installed using Helm 3 beta version in order to remove tiller server side runtime component which cause security concerns related with cluster-admin privileges cluster  
 
 
-![alt text](https://cldup.com/7Y2oxoUBYQ.png "HA second approach")  
+
+![alt text](https://cldup.com/7Y2oxoUBYQ.png "AKS behavior")  
 
 
 
@@ -214,7 +213,11 @@ The Kubernetes cluster general behavior emphasizing of the following:
 # REFERENCES
 
 https://docs.microsoft.com/en-us/azure/aks/availability-zones
+
 https://docs.microsoft.com/en-us/azure/aks/scale-cluster
+
 https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler
+
 https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
 https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps
