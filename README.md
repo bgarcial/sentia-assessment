@@ -206,23 +206,88 @@ The Kubernetes cluster general behavior emphasizing of the following:
 
 ![alt text](https://cldup.com/HmZR5xo00x.jpg "AKS behavior")  
 
-
+---
 ## Part 2: CI/CD Process
 
-## Some considerations and actions
+### Some considerations and actions
 
-----
+#### Continous Integration process
 
+Possibly will be necessary consider to have two separate CI pipelines: 
+One for Infrastructure and the other one for Wordpress applications artifacts
+
+##### Infrastructure CI Pipeline
+- Validate ARM Templates.
+- Copy the templates and publish to the artifacts will used by CD
+- Execute ARM Templates. These templates will be executed one time.
+  - Vnet and subnets creation.
+  - Azure SQL for MySQL instance creation. 
+  - Azure Kubernetes Cluster creation.
+
+##### Wordpress application CI pipeline 
+- Build wordpress image per site (based on the `stable/wordpress` image) 
+  - Maybe I would need to include plugins and/or some php modules or libraries to install in the machine agent used there.
+- Push docker Wordpress image to Azure Container Registry 
+  - It can trigger builds automatically when the base image is updated.
+    It could be good for security patches for example
+  - By the way, could be possible to restrict access to ACR only from the VNet just in case
+---  
+##### Question / decision to make myself here
+
+- Do I need to create manually a helm chart? (`helm create` ... )
+Or ... 
+- can I make an image per site? 
+  - upload them to the ACR, and in the helm install command reference that image?  
+
+I should analyze the following situation:
+
+- The wordpress helm chart, deploying it as a `helm install command` has [many parameters to customize](https://github.com/helm/charts/tree/master/stable/wordpress#configuration). 
+
+
+The helm chart also bring the options to use some commands like: 
+
+`helm install --name my-release -f values.yaml stable/wordpress`
+The [`values.yaml` to customize](https://github.com/helm/charts/blob/master/stable/wordpress/values.yaml
+) (editing the file) 
+
+Which could be the best alternative?:
+1. clone completely the helm chart from their repository and customize it locally 
+   and after that use it in the build and release pipeline.
+
+2. Or just install the helm chart using helm install or helm upgrade commands making use as much as parameters possible
+
+Currently I'm not sure what's the best option. 
+It's a kind of decision to make *"on the fly"* and try it out. 
+
+---
+
+#### Continuous Deployment process
+
+CD: 
+In the Continuous Delivery process I'll do: 
+
+
+- The helm3 installation
+- The namespaces per site creation
+- The creation secrets process  to connect the cluster with MySQL
+- The WordPress helm installation  (in each of the namespaces required - 10 sites says the challenge)
+  - Do I need to make 10 Wordpress Instances deployments? (The customer currently has 10 sites running.)
+-  The Ingress controller installation
+   -  Via helm `bitnami/nginx-ingress-controller` or `stable/nginx-ingress`.
+      -  I can use the official helm chart and include the loadbalancerIP as a parameter
+- The Ingress resources execution, Maybe 10 ingress resources one per domain or all of them in one domain?
 
 ---
 # REFERENCES
 
-https://docs.microsoft.com/en-us/azure/aks/availability-zones
+- https://docs.microsoft.com/en-us/azure/aks/availability-zones
 
-https://docs.microsoft.com/en-us/azure/aks/scale-cluster
+- https://docs.microsoft.com/en-us/azure/aks/scale-cluster
 
-https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler
+- https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler
 
-https://kubernetes.io/docs/concepts/services-networking/network-policies/
+- https://kubernetes.io/docs/concepts/services-networking/network-policies/
 
-https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps
+- https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps
+
+- https://docs.microsoft.com/en-us/azure/container-registry/container-registry-vnet
