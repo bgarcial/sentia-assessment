@@ -1,0 +1,317 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "metadata": {
+                "description": "The location of AKS resource."
+            }
+        },
+        "dnsPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+            }
+        },
+        "agentCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number of agent nodes for the cluster."
+            },
+            "minValue": 1,
+            "maxValue": 100
+        },
+        "agentVMSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2_v2",
+            "metadata": {
+                "description": "The size of the Virtual Machine."
+            }
+        },
+        "servicePrincipalClientId": {
+            "metadata": {
+                "description": "Client ID (used by cloudprovider)."
+            },
+            "type": "securestring"
+        },
+        "servicePrincipalClientSecret": {
+            "metadata": {
+                "description": "The Service Principal Client Secret."
+            },
+            "type": "securestring"
+        },
+        "kubernetesVersion": {
+            "type": "string",
+            "defaultValue": "1.14.7",
+            "metadata": {
+                "description": "The version of Kubernetes."
+            }
+        },
+        "vmssNodePool": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Boolean flag to turn on and off of VM scale sets"
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of the OMS workspace."
+            }
+        },
+        "omsWorkspaceId": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the resource id of the OMS workspace."
+            }
+        },
+        "omsSku": {
+            "type": "string",
+            "defaultValue": "standalone",
+            "allowedValues": [
+                "free",
+                "standalone",
+                "pernode"
+            ],
+            "metadata": {
+                "description": "Select the SKU for your workspace."
+            }
+        },
+        "principalId": {
+            "type": "string",
+            "metadata": {
+                "description": "The objectId of service principal for cluster monitoring."
+            }
+        },
+        "serviceCidr": {
+            "type": "string",
+            "metadata": {
+                "description": "A CIDR notation IP range from which to assign service cluster IPs."
+            },
+            "defaultValue": "10.0.0.0/16"
+        },
+        "dnsServiceIP": {
+            "type": "string",
+            "metadata": {
+                "description": "Containers DNS server IP address."
+            },
+            "defaultValue": "10.0.0.10"
+        },
+        "dockerBridgeCidr": {
+            "type": "string",
+            "metadata": {
+                "description": "A CIDR notation IP for Docker bridge."
+            },
+            "defaultValue": "172.17.0.1/16"
+        },
+        "environmentName": {
+            "type": "string",
+            "metadata": {
+                "description": "Environment name for tagging purposes, e.g. dev, accp, prod"
+            }
+        }
+    },
+    "variables": {
+        "enableOmsAgent": true,
+        "maxPods": 110,
+        "networkPlugin": "kubenet",
+        "osDiskSizeGB": 0, //1023
+        "osType": "Linux"        
+    },
+    "resources": [
+        {
+            "apiVersion": "2019-04-01",
+            "name": "[concat(resourceGroup().name, '-vnet')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "westeurope",
+            "properties": {
+                "subnets": [
+                    {
+                        "name": "aks-subnet",
+                        "properties": {
+                            "addressPrefix": "10.240.0.0/16"
+                        }
+                    },
+                    {
+                        "name": "persistence-subnet",
+                        "properties": {
+                            "addressPrefix": "10.241.0.0/27",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": [
+                                        "[resourceGroup().location]"
+                                    ]
+                                },
+                                {
+                                    "service": "Microsoft.Sql",
+                                    "locations": [
+                                        "[resourceGroup().location]"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "AzureBastionSubnet",
+                        "properties": {
+                            "addressPrefix": "10.242.0.0/27"
+                        }
+                    }
+                ],
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/8"
+                    ]
+                }
+            },
+            "tags": {
+                "env": "[parameters('environmentName')]"
+            }
+        },
+        {
+            "apiVersion": "2019-02-01",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "name": "[concat(parameters('environmentName'), '-SentiaWordpress-Bernardo-bastionHost-ip')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": {
+                "env": "[parameters('environmentName')]"
+            }
+        },
+        // {
+        //     "apiVersion": "2018-10-01",
+        //     "type": "Microsoft.Network/bastionHosts",
+        //     "name": "[concat(resourceGroup().name, '-Bernardo-bastionHost')]",
+        //     "location": "[parameters('location')]",
+        //     "dependsOn": [
+        //         "[concat(parameters('environmentName'), '-SentiaWordpress-Bernardo-bastionHost-ip')]"
+        //     ],
+        //     "properties": {
+        //         "ipConfigurations": [
+        //             {
+        //                 "name": "IpConf",
+        //                 "properties": {
+        //                     "subnet": {
+        //                         "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', resourceGroup().name, '-vnet'), '/subnets/AzureBastionSubnet')]"
+        //                     },
+        //                     "publicIPAddress": {
+        //                         "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses', resourceGroup().name, '-bastionHost-ip'), '/publicIPAddresses/dev-SentiaWordpress-Bernardo-bastionHost-ip')]"
+        //                     }
+        //                 }
+        //             }
+        //         ]
+        //     },
+        //     "tags": {
+        //         "env": "[parameters('environmentName')]"
+        //     }
+        // },
+        {
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/dev-SentiaWordpress-Bernardo-vnet",
+            ],
+            "type": "Microsoft.ContainerService/managedClusters",
+            "location": "[parameters('location')]",
+            "name": "[concat(resourceGroup().name, '-aks')]",
+            "properties": {
+                "kubernetesVersion": "[parameters('kubernetesVersion')]",
+                "enableRBAC": true,
+                "dnsPrefix": "[parameters('dnsPrefix')]",
+                "agentPoolProfiles": [
+                    {
+                        "name": "defaultpool",
+                        "osDiskSizeGB": "[variables('osDiskSizeGB')]",
+                        "count": "[parameters('agentCount')]",
+                        "vmSize": "[parameters('agentVMSize')]",
+                        "osType": "[variables('osType')]",
+                        "storageProfile": "ManagedDisks",
+                        "type": "VirtualMachineScaleSets",
+                        "vnetSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', concat(resourceGroup().name, '-vnet'), 'aks-subnet')]",
+                        "maxPods": "[variables('maxPods')]"
+                    }
+                ],
+                "servicePrincipalProfile": {
+                    "ClientId": "[parameters('servicePrincipalClientId')]",
+                    "Secret": "[parameters('servicePrincipalClientSecret')]"
+                },
+                "networkProfile": {
+                    "networkPlugin": "[variables('networkPlugin')]",
+                    "serviceCidr": "[parameters('serviceCidr')]",
+                    "dnsServiceIP": "[parameters('dnsServiceIP')]",
+                    "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+                },
+                // "addonProfiles": {
+                //     "omsagent": {
+                //         "enabled": "[variables('enableOmsAgent')]",
+                //         "config": {
+                //             "logAnalyticsWorkspaceResourceID": "[parameters('omsWorkspaceId')]"
+                //         }
+                //     }
+                // }
+            },
+            "tags": {
+                "env": "[parameters('environmentName')]"
+            }
+        },  
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "location": "[resourceGroup().location]",
+            "name": "ContainerInsights",
+            "properties": {
+                "workspaceResourceId": "[parameters('omsWorkspaceId')]"
+            },
+            "plan": {
+                "name": "ContainerInsights",
+                "product": "[concat('OMSGallery/', 'ContainerInsights')]",
+                "promotionCode": "",
+                "publisher": "Microsoft"
+            }
+        },
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('workspaceName')]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('omsSku')]"
+                }
+            }
+        },
+        {
+                        
+            "type": "Microsoft.ContainerService/managedClusters/providers/roleAssignments",
+            "apiVersion": "2018-01-01-preview",
+            "name": "dev-SentiaWordpress-Bernardo/Microsoft.Authorization/251d14bb-b971-47bd-98db-cef1bf4cc8f6",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '3913510d-42f4-4e42-8a64-420c390055eb')]",
+                "principalId": "[parameters('principalId')]",
+                "scope": "/subscriptions/9148bd11-f32b-4b5d-a6c0-5ac5317f29ca/resourceGroups/dev-SentiaWordpress-Bernardo/providers/Microsoft.ContainerService/managedClusters/dev-SentiaWordpress-Bernardo"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.ContainerService/managedClusters', resourceGroup().name, '-aks')]"
+            ]    
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
+            "apiVersion": "2017-05-01",
+            "name": "dev-SentiaWordpress-Bernardo-vnet/default/Microsoft.Authorization/3ca31ef5-2436-481e-9102-bc09c02dae29",
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                "principalId": "[parameters('principalId')]",
+                "scope": "/subscriptions/9148bd11-f32b-4b5d-a6c0-5ac5317f29ca/resourceGroups/dev-SentiaWordpress-Bernardo/providers/Microsoft.Network/virtualNetworks/dev-SentiaWordpress-Bernardo-vnet/subnets/default"
+            }
+        }
+    ]
+}
