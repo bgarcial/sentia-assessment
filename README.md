@@ -177,7 +177,7 @@ would be possible consider the following benefits when we build our own applicat
 
 According to the previous facts, assumptions and questions, I have the first lanscape architecture diagram  
 
-![alt text](https://cldup.com/URFClVdj-Q.jpg "HA second approach")
+![alt text](https://cldup.com/B5S9OKZmxj.jpg "HA second approach")
 
 The components are:
 
@@ -204,9 +204,14 @@ The Kubernetes cluster general behavior emphasizing of the following:
 
 
 
-![alt text](https://cldup.com/7Y2oxoUBYQ.png "AKS behavior")  
+![alt text](https://cldup.com/HmZR5xo00x.jpg "AKS behavior")  
 
 
+## Part 2: CI/CD Process
+
+## Some considerations and actions
+
+----
 
 
 ---
