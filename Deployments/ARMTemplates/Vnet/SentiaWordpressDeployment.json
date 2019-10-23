@@ -54,6 +54,75 @@
         "description": "persistence-subnet"
       }
     },
+    "k8s_cluster_name":{
+      "type": "string",
+      "defaultValue": "WordpressSentiaAssessment",
+      "metadata": {
+        "description": "The name of the Azure Kubernetes Service Cluster"
+      }
+    },
+    "kubernetesVersion": {
+      "type": "string",
+        "defaultValue": "1.14.7",
+        "metadata": {
+          "description": "The version of the Azure Kubernetes Service Cluster"
+        }
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "metadata": {
+          "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+      }
+    },
+    "nodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+          "description": "The number of nodes that should be created along with the cluster."
+      },
+      "minValue": 1,
+      "maxValue": 100
+    },
+    "agentVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "servicePrincipalClientId": {
+      "metadata": {
+        "description": "Client ID (used by cloudprovider)."
+      },
+      "type": "securestring"
+    },
+    "servicePrincipalClientSecret": {
+      "metadata": {
+        "description": "The Service Principal Client Secret."
+      },
+      "type": "securestring"
+    },
+    "serviceCidr": {
+      "type": "string",
+        "metadata": {
+            "description": "A CIDR notation IP range from which to assign service cluster IPs."
+        },
+        "defaultValue": "100.0.0.0/16"
+    },
+    "dnsServiceIP": {
+      "type": "string",
+        "metadata": {
+          "description": "Containers DNS server IP address."
+        },
+        "defaultValue": "100.0.0.10"
+    },
+    "dockerBridgeCidr": {
+      "type": "string",
+      "metadata": {
+          "description": "A CIDR notation IP for Docker bridge."
+      },
+      "defaultValue": "172.17.0.1/16"
+    },
     "environmentName": {
       "type": "string",
       "metadata": {
@@ -61,7 +130,12 @@
       }
     }
   },
-  "variables": {},
+  "variables": {
+    "osDiskSizeGB": 0,
+    "osType": "Linux",
+    "maxPods": 110,
+    "networkPlugin": "kubenet"
+  },
   "resources": [
     {
       "type": "Microsoft.Resources/resourceGroups",
@@ -124,6 +198,48 @@
               },
               "tags": {
                 "Environment": "[parameters('environmentName')]"
+              }
+            },
+            {
+              "apiVersion": "2019-06-01",
+              "dependsOn": [
+                "Microsoft.Network/virtualNetworks/AssessmentVNet"
+              ],
+              "type": "Microsoft.ContainerService/managedClusters",
+              "location":"[parameters('location')]",
+              "name": "[concat(parameters('k8s_cluster_name'), '-aks')]",
+              "properties":{
+                "kubernetesVersion":"[parameters('kubernetesVersion')]",
+                "enableRBAC": true,
+                "dnsPrefix": "[concat(parameters('k8s_cluster_name'),'-dns')]",
+                "agentPoolProfiles":[
+                  {
+                    "name":"aks-agentpool",
+                    "osDiskSizeGB": "[variables('osDiskSizeGB')]",
+                    "count":"[parameters('nodeCount')]",
+                    "vmSize": "[parameters('agentVMSize')]",
+                    "osType": "[variables('osType')]",
+                    "storageProfile": "ManagedDisks",
+                    "type": "VirtualMachineScaleSets",
+                    "vnetSubnetID": "'Microsoft.Network/virtualNetworks/subnets/aks-subnet",
+                    "maxPods": "[variables('maxPods')]"
+                  }
+                ],
+                "servicePrincipalProfile": {
+                    "ClientId": "[parameters('servicePrincipalClientId')]",
+                    "Secret": "[parameters('servicePrincipalClientSecret')]"
+                },
+                "networkProfile": {
+                  "networkPlugin": "[variables('networkPlugin')]",
+                  "serviceCidr": "[parameters('serviceCidr')]",
+                  "dnsServiceIP": "[parameters('dnsServiceIP')]",
+                  "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+
+
+
+                }
+
+
               }
             }  
           ]
