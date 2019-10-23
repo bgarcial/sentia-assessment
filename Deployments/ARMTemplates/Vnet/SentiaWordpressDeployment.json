@@ -55,11 +55,7 @@
       }
     },
     "environmentName": {
-      "type": "object",
-      "defaultValue": {
-        "Environment": "ACCP",
-        "Project": "Sentia Wordpress Assessment"
-      },
+      "type": "string",
       "metadata": {
         "description": "Environment name for tagging purposes, e.g. dev, accp, prod"
       }
@@ -125,6 +121,9 @@
                     "[parameters('vnetAddressPrefix')]"
                   ]
                 }
+              },
+              "tags": {
+                "Environment": "[parameters('environmentName')]"
               }
             }  
           ]
