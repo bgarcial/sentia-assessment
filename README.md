@@ -1,4 +1,4 @@
-# Sentia Wordpress Technical Assesment
+# Sentia Wordpress Technical Assessment
 
 This repository presents an approach and possibile alternatives to address the assigment [presented here](https://github.com/sentialabs/public-cloud-recruitment/blob/master/ASSIGNEMENT.md)
 
