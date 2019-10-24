@@ -1,0 +1,227 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "resourceGroupName": {
+        "type": "string"  
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "West Europe",
+        "metadata": {
+          "description": "Geographic Location for all resources."
+        }
+      },
+      "vnetName": {
+        "type": "string",
+        "defaultValue": "AssessmentVNetTesting",
+        "metadata": {
+          "description": "Sentia Wordpress Assesment Vnet"
+        }
+      },
+      "vnetAddressPrefix": {
+        "type": "string",
+        "defaultValue": "10.0.0.0/8",
+        "metadata": {
+          "description": "Address prefix"
+        }
+      },
+      "subnet1Prefix": {
+        "type": "string",
+        "defaultValue": "10.240.0.0/16",
+        "metadata": {
+          "description": "AKS Subnet"
+        }
+      },
+      "subnet1Name": {
+        "type": "string",
+        "defaultValue": "aks-subnet",
+        "metadata": {
+          "description": "aks-subnet-testing"
+        }
+      },
+      "subnet2Prefix": {
+        "type": "string",
+        "defaultValue": "10.241.0.0/27",
+        "metadata": {
+          "description": "Persistence subnet"
+        }
+      },
+      "subnet2Name": {
+        "type": "string",
+        "defaultValue": "persistence-subnet-testing",
+        "metadata": {
+          "description": "persistence-subnet"
+        }
+      },
+      "k8s_cluster_name":{
+        "type": "string",
+        "defaultValue": "WordpressSentiaAssessment",
+        "metadata": {
+          "description": "The name of the Azure Kubernetes Service Cluster"
+        }
+      },
+      "kubernetesVersion": {
+        "type": "string",
+          "defaultValue": "1.14.7",
+          "metadata": {
+            "description": "The version of the Azure Kubernetes Service Cluster"
+          }
+      },
+      "dnsPrefix": {
+        "type": "string",
+        "metadata": {
+            "description": "Optional DNS prefix to use with hosted Kubernetes API server FQDN."
+        }
+      },
+      "nodeCount": {
+        "type": "int",
+        "defaultValue": 3,
+        "metadata": {
+            "description": "The number of nodes that should be created along with the cluster."
+        },
+        "minValue": 1,
+        "maxValue": 100
+      },
+      "agentVMSize": {
+        "type": "string",
+        "defaultValue": "Standard_D2_v2",
+        "metadata": {
+          "description": "The size of the Virtual Machine."
+        }
+      },
+      "servicePrincipalClientId": {
+        "metadata": {
+          "description": "Client ID (used by cloudprovider)."
+        },
+        "type": "securestring"
+      },
+      "servicePrincipalClientSecret": {
+        "metadata": {
+          "description": "The Service Principal Client Secret."
+        },
+        "type": "securestring"
+      },
+      "serviceCidr": {
+        "type": "string",
+          "metadata": {
+              "description": "A CIDR notation IP range from which to assign service cluster IPs."
+          },
+          "defaultValue": "100.0.0.0/16"
+      },
+      "dnsServiceIP": {
+        "type": "string",
+          "metadata": {
+            "description": "Containers DNS server IP address."
+          },
+          "defaultValue": "100.0.0.10"
+      },
+      "dockerBridgeCidr": {
+        "type": "string",
+        "metadata": {
+            "description": "A CIDR notation IP for Docker bridge."
+        },
+        "defaultValue": "172.17.0.1/16"
+      },
+      "environmentName": {
+        "type": "string",
+        "metadata": {
+          "description": "Environment name for tagging purposes, e.g. dev, accp, prod"
+        }
+      }
+    },
+    "variables": {
+      "osDiskSizeGB": 1023,
+      "osType": "Linux",
+      "maxPods": 110,
+      "networkPlugin": "kubenet"
+    },
+    "resources": [
+      
+        {
+            "apiVersion": "2018-10-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnetName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "subnets": [
+                    {
+                        "name": "[parameters('subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet1Prefix')]"
+                        }   
+                    },
+                    {
+                        "name": "[parameters('subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnet2Prefix')]",
+                            "serviceEndpoints": [
+                                {
+                                    "service": "Microsoft.Storage",
+                                    "locations": "[parameters('location')]"
+                                },
+                                {
+                                    "service": "Microsoft.Sql",
+                                    "locations": "[parameters('location')]"
+                                }
+                            ]
+                        }
+                    }
+                ],      
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressPrefix')]"
+                    ]
+                }
+            },
+            "tags": {
+                "Environment": "[parameters('environmentName')]"
+            }
+        },
+        {
+            "apiVersion": "2019-06-01",
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/AssessmentVNetTesting"
+            ],
+            "type": "Microsoft.ContainerService/managedClusters",
+            "location":"[parameters('location')]",
+            "name": "[concat(parameters('k8s_cluster_name'), '-aks')]",
+            "properties":{
+                "kubernetesVersion":"[parameters('kubernetesVersion')]",
+                "enableRBAC": true,
+                "dnsPrefix": "[concat(parameters('k8s_cluster_name'),'-dns')]",
+                "agentPoolProfiles":[
+                {
+                    "name":"defaultpool",
+                    "osDiskSizeGB": "[variables('osDiskSizeGB')]",
+                    "count":"[parameters('nodeCount')]",
+                    "vmSize": "[parameters('agentVMSize')]",
+                    "osType": "[variables('osType')]",
+                    "storageProfile": "ManagedDisks",
+                    "type": "VirtualMachineScaleSets",
+                    "vnetSubnetID": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
+                    "maxPods": "[variables('maxPods')]"
+                }
+                ],
+                "servicePrincipalProfile": {
+                    "ClientId": "[parameters('servicePrincipalClientId')]",
+                    "Secret": "[parameters('servicePrincipalClientSecret')]"
+                },
+                "networkProfile": {
+                    "networkPlugin": "[variables('networkPlugin')]",
+                    "serviceCidr": "[parameters('serviceCidr')]",
+                    "dnsServiceIP": "[parameters('dnsServiceIP')]",
+                    "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+                }
+            },
+            "tags": {
+                "Environment": "[parameters('environmentName')]"
+            }
+        }  
+
+    ]
+}
+
+    
+
+

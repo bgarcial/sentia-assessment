@@ -134,8 +134,7 @@
     "osDiskSizeGB": 1023,
     "osType": "Linux",
     "maxPods": 110,
-    "networkPlugin": "kubenet",
-    "vnetSubnetID": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]"
+    "networkPlugin": "kubenet"
   },
   "resources": [
     {
@@ -204,7 +203,7 @@
             {
               "apiVersion": "2019-06-01",
               "dependsOn": [
-                "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]"
+                "Microsoft.Network/virtualNetworks/AssessmentVNet"
               ],
               "type": "Microsoft.ContainerService/managedClusters",
               "location":"[parameters('location')]",
@@ -222,7 +221,7 @@
                     "osType": "[variables('osType')]",
                     "storageProfile": "ManagedDisks",
                     "type": "VirtualMachineScaleSets",
-                    "vnetSubnetID": "[variables('vnetSubnetID')]",
+                    "vnetSubnetID": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
                     "maxPods": "[variables('maxPods')]"
                   }
                 ],
