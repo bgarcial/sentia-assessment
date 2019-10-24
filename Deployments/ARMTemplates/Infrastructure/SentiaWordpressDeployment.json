@@ -131,10 +131,11 @@
     }
   },
   "variables": {
-    "osDiskSizeGB": 0,
+    "osDiskSizeGB": 1023,
     "osType": "Linux",
     "maxPods": 110,
-    "networkPlugin": "kubenet"
+    "networkPlugin": "kubenet",
+    "vnetSubnetID": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]"
   },
   "resources": [
     {
@@ -203,7 +204,7 @@
             {
               "apiVersion": "2019-06-01",
               "dependsOn": [
-                "Microsoft.Network/virtualNetworks/AssessmentVNet"
+                "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]"
               ],
               "type": "Microsoft.ContainerService/managedClusters",
               "location":"[parameters('location')]",
@@ -214,14 +215,14 @@
                 "dnsPrefix": "[concat(parameters('k8s_cluster_name'),'-dns')]",
                 "agentPoolProfiles":[
                   {
-                    "name":"aks-agentpool",
+                    "name":"defaultpool",
                     "osDiskSizeGB": "[variables('osDiskSizeGB')]",
                     "count":"[parameters('nodeCount')]",
                     "vmSize": "[parameters('agentVMSize')]",
                     "osType": "[variables('osType')]",
                     "storageProfile": "ManagedDisks",
                     "type": "VirtualMachineScaleSets",
-                    "vnetSubnetID": "'Microsoft.Network/virtualNetworks/subnets/aks-subnet",
+                    "vnetSubnetID": "[variables('vnetSubnetID')]",
                     "maxPods": "[variables('maxPods')]"
                   }
                 ],
@@ -234,12 +235,10 @@
                   "serviceCidr": "[parameters('serviceCidr')]",
                   "dnsServiceIP": "[parameters('dnsServiceIP')]",
                   "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
-
-
-
                 }
-
-
+              },
+              "tags": {
+                "Environment": "[parameters('environmentName')]"
               }
             }  
           ]

@@ -1,0 +1,141 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "resourceGroupName":{
+        "type": "string"  
+      },
+      "location": {
+        "type": "string",
+        "defaultValue": "West Europe",
+        "metadata": {
+          "description": "Geographic Location for all resources."
+        }
+      },
+      "vnetName": {
+        "type": "string",
+        "defaultValue": "AssessmentVNet",
+        "metadata": {
+          "description": "Sentia Wordpress Assesment Vnet"
+        }
+      },
+      "vnetAddressPrefix": {
+        "type": "string",
+        "defaultValue": "10.0.0.0/8",
+        "metadata": {
+          "description": "Address prefix"
+        }
+      },
+      "subnet1Prefix": {
+        "type": "string",
+        "defaultValue": "10.240.0.0/16",
+        "metadata": {
+          "description": "AKS Subnet"
+        }
+      },
+      "subnet1Name": {
+        "type": "string",
+        "defaultValue": "aks-subnet",
+        "metadata": {
+          "description": "aks-subnet"
+        }
+      },
+      "subnet2Prefix": {
+        "type": "string",
+        "defaultValue": "10.241.0.0/27",
+        "metadata": {
+          "description": "Persistence subnet"
+        }
+      },
+      "subnet2Name": {
+        "type": "string",
+        "defaultValue": "persistence-subnet",
+        "metadata": {
+          "description": "persistence-subnet"
+        }
+      },
+      "environmentName": {
+        "type": "string",
+        "metadata": {
+          "description": "Environment name for tagging purposes, e.g. dev, accp, prod"
+        }
+      }
+    },
+    "variables": {},
+    "resources": [
+      {
+        "type": "Microsoft.Resources/resourceGroups",
+        "apiVersion": "2018-05-01",
+        "location": "[parameters('location')]",
+        "name": "[parameters('resourceGroupName')]",
+        "tags": {
+          "Environment": "[parameters('environmentName')]"
+        },
+        "properties": {}
+      },
+      {
+        "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "storageDeployment",
+            "resourceGroup": "[parameters('resourceGroupName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/resourceGroups/', parameters('resourceGroupName'))]"
+            ],
+            "properties": {
+              "mode": "Incremental",
+              "template": {
+                "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                "contentVersion": "1.0.0.0",
+                "parameters": {},
+                "variables": {},
+                "resources": [
+                  {
+                    "apiVersion": "2018-10-01",
+                    "type": "Microsoft.Network/virtualNetworks",
+                    "name": "[parameters('vnetName')]",
+                    "location": "[parameters('location')]",
+                    "properties": {
+                      "addressSpace": {
+                        "addressPrefixes": [
+                          "[parameters('vnetAddressPrefix')]"
+                        ]
+                      }
+                    },
+                    "resources": [
+                      {
+                        "apiVersion": "2018-10-01",
+                        "type": "subnets",
+                        "location": "[parameters('location')]",
+                        "name": "[parameters('subnet1Name')]",
+                        "dependsOn": [
+                          "[parameters('vnetName')]"
+                        ],
+                        "properties": {
+                          "addressPrefix": "[parameters('subnet1Prefix')]"
+                        }
+                      },
+                      {
+                        "apiVersion": "2018-10-01",
+                        "type": "subnets",
+                        "location": "[parameters('location')]",
+                        "name": "[parameters('subnet2Name')]",
+                        "dependsOn": [
+                          "[parameters('vnetName')]",
+                          "[parameters('subnet1Name')]"
+                        ],
+                        "properties": {
+                          "addressPrefix": "[parameters('subnet2Prefix')]"
+                        }
+                      }
+                    ],
+                    "tags": {
+                      "Environment": "[parameters('environmentName')]"
+                    }
+                  }  
+                ]
+              }
+            }
+      }
+
+    ]
+}
