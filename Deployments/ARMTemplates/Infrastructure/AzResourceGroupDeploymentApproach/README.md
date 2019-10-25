@@ -156,3 +156,46 @@ DeploymentDebugLogLevel :
 
 PS /home/bgarcial>
 ```
+
+# Data Deployment to use from Azure DevOps CI pipeline
+
+
+1. Create environment variables needed for the deployment
+
+```
+PS /home/bgarcial> $resourceGroupName="sentia-assessment"
+PS /home/bgarcial> $templateUri="/home/bgarcial/projects/sentia-assesment/Deployments/ARMTemplates/Infrastructure/  
+AzResourceGroupDeploymentApproach  New-AzDeploymentApproach           Vnets-Subnets.json                 
+PS /home/bgarcial> $templateUri="/home/bgarcial/projects/sentia-assesment/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json"
+PS /home/bgarcial> $environmentName="testing"
+PS /home/bgarcial> $resourceGroupNameFromTemplate="sentia-assessment"
+PS /home/bgarcial> $servicePrincipalClientId = Read-Host -AsSecureString                                                         ************************************      
+PS /home/bgarcial> $servicePrincipalClientSecret = Read-Host -AsSecureString                                                     ********************************          
+PS /home/bgarcial> $administratorLogin="sentia"         
+PS /home/bgarcial> $administratorLoginPassword="xxxxxxxxxxxxxxx"
+PS /home/bgarcial> $location="westeurope"               
+PS /home/bgarcial>   
+```
+
+2. Create the resource group need for the deployment 
+
+```
+PS /home/bgarcial> New-AzResourceGroup `
+>> -Name $resourceGroupName `
+>> -Location $location
+
+ResourceGroupName : sentia-assessment
+Location          : westeurope
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/xxxxxxxxxxxxxxxxx/resourceGroups/sentia-assessment
+
+
+PS /home/bgarcial> 
+```
+
+3. Executing Deployment
+
+```
+
+```

@@ -231,12 +231,12 @@
       "batch": {
         "rules": [
           {
-            "Name": "rule1",
-            "StartIpAddress": "0.0.0.0",
-            "EndIpAddress": "255.255.255.255"
+            "Name": "homeIpAdress",
+            "StartIpAddress": "217.105.19.231",
+            "EndIpAddress": "217.105.19.231"
           },
           {
-            "Name": "rule2",
+            "Name": "sentiaIpAddress",
             "StartIpAddress": "0.0.0.0",
             "EndIpAddress": "255.255.255.255"
           }
@@ -348,6 +348,9 @@
           "storageAutoGrow": "[parameters('storageAutoGrow')]"   
         }
       },
+      "tags": {
+        "Environment": "[parameters('environmentName')]"
+      },
       "resources":[
         {
           "name": "[parameters('virtualNetworkRuleName')]",
@@ -359,8 +362,11 @@
           },
           "dependsOn": [
             "Microsoft.DBforMySQL/servers/WordpressSentiaAssessment-db"
-          ]
-        }
+          ],
+          "tags": {
+            "Environment": "[parameters('environmentName')]"
+          }
+        } 
       ]  
     },
     {
@@ -380,6 +386,9 @@
       "properties":{
         "StartIpAddress": "[variables('firewallrules').batch.rules[copyIndex()].StartIpAddress]",
         "EndIpAddress": "[variables('firewallrules').batch.rules[copyIndex()].EndIpAddress]"
+      },
+      "tags": {
+        "Environment": "[parameters('environmentName')]"
       }
     }
   ]
