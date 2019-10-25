@@ -215,6 +215,27 @@
         "description": "Virtual Network RuleName"
       }
     },
+    "registryName": {
+      "type": "string",
+      "defaultValue": "WordpressSentiaAssessment",
+      "metadata": {
+          "description": "The name of the container registry."
+      }
+    },
+    "registrySku": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "metadata": {
+          "description": "The SKU of the container registry."
+      }
+    },
+    "adminUserEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+          "description": "The value that indicates whether the admin user is enabled."
+      }
+    },
     "environmentName": {
       "type": "string",
       "metadata": {
@@ -389,6 +410,18 @@
       },
       "tags": {
         "Environment": "[parameters('environmentName')]"
+      }
+    },
+    {
+      "name": "[parameters('registryName')]",
+      "type": "Microsoft.ContainerRegistry/registries",
+      "location": "[parameters('location')]",
+      "apiVersion": "2017-10-01",
+      "sku": {
+          "name": "[parameters('registrySku')]"
+      },
+      "properties": {
+          "adminUserEnabled": "[parameters('adminUserEnabled')]"
       }
     }
   ]

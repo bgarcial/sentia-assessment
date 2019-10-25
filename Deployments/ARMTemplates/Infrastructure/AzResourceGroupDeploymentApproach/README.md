@@ -164,11 +164,13 @@ PS /home/bgarcial>
 
 ```
 PS /home/bgarcial> $resourceGroupName="sentia-assessment"
-PS /home/bgarcial> $templateUri="/home/bgarcial/projects/sentia-assesment/Deployments/ARMTemplates/Infrastructure/  
-AzResourceGroupDeploymentApproach  New-AzDeploymentApproach           Vnets-Subnets.json                 
+        
 PS /home/bgarcial> $templateUri="/home/bgarcial/projects/sentia-assesment/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json"
+
 PS /home/bgarcial> $environmentName="testing"
+
 PS /home/bgarcial> $resourceGroupNameFromTemplate="sentia-assessment"
+
 PS /home/bgarcial> $servicePrincipalClientId = Read-Host -AsSecureString                                                         ************************************      
 PS /home/bgarcial> $servicePrincipalClientSecret = Read-Host -AsSecureString                                                     ********************************          
 PS /home/bgarcial> $administratorLogin="sentia"         
