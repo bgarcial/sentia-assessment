@@ -231,7 +231,7 @@
     },
     "adminUserEnabled": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "metadata": {
           "description": "The value that indicates whether the admin user is enabled."
       }
