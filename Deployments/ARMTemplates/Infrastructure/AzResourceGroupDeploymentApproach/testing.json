@@ -324,7 +324,7 @@
             "osType": "[variables('osType')]",
             "storageProfile": "ManagedDisks",
             "type": "VirtualMachineScaleSets",
-            "vnetSubnetID": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
+            "vnetSubnetID": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
             "maxPods": "[variables('maxPods')]"
           }
         ],
@@ -375,7 +375,7 @@
           "type": "virtualNetworkRules",
           "apiVersion": "2017-12-01",
           "properties": {
-            "virtualNetworkSubnetId": "[resourceId(parameters('resourceGroupName'),'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet2Name'))]",
+            "virtualNetworkSubnetId": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet2Name'))]",
             "ignoreMissingVnetServiceEndpoint": true
           },
           "dependsOn": [
