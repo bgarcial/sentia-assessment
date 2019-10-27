@@ -252,12 +252,12 @@
             "Name": "homeIpAdress",
             "StartIpAddress": "217.105.19.231",
             "EndIpAddress": "217.105.19.231"
-          },
-          {
-            "Name": "sentiaIpAddress",
-            "StartIpAddress": "0.0.0.0",
-            "EndIpAddress": "255.255.255.255"
           }
+          // {
+          //   "Name": "sentiaIpAddress",
+          //   "StartIpAddress": "0.0.0.0",
+          //   "EndIpAddress": "255.255.255.255"
+          // }
         ]
       }
     }
