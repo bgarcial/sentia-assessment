@@ -266,6 +266,11 @@ It's a kind of decision to make *"on the fly"* and try it out.
 CD: 
 In the Continuous Delivery process I'll do: 
 
+- Importing wordpress public image to my ACR
+
+```
+ az acr import --name WordpressSentiaAssessment --source docker.io/library/wordpress:5.2.4 --image wordpress:5.2.4
+```
 
 - The helm3 installation
 - The namespaces per site creation
