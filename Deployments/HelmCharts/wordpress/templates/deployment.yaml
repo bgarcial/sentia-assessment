@@ -33,12 +33,23 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
+              # To perform a probe, the kubelet sends an HTTP GET request to the server that is 
+              # running in the Container and listening on port 80
               path: /
-              port: http
+              # If the handler for the server’s / path returns a success code, 
+              # the kubelet or CNI considers the Container to be alive and healthy. 
+              # If the handler returns a failure code, the kubelet kills the Container and restarts it.
+              # Any code greater than or equal to 200 and less than 400 indicates success. 
+              # Any other code indicates failure.
+              port: 80 # http
+            initialDelaySeconds: 15
+            # The initialDelaySeconds field tells the kubelet that it should wait 15 seconds before 
+            # performing the first probe
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
-              port: http
+              port: 80 # http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
