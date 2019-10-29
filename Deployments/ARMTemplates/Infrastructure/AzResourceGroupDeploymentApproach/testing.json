@@ -34,7 +34,7 @@
       "type": "string",
       "defaultValue": "aks-subnet",
       "metadata": {
-        "description": "aks-subnet-testing"
+        "description": "aks-subnet"
       }
     },
     "subnet2Prefix": {
@@ -46,7 +46,7 @@
     },
     "subnet2Name": {
       "type": "string",
-      "defaultValue": "persistence-subnet-testing",
+      "defaultValue": "persistence-subnet",
       "metadata": {
         "description": "persistence-subnet"
       }
