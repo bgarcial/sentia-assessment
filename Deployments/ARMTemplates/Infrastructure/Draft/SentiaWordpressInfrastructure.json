@@ -218,7 +218,7 @@
         {
             "apiVersion": "2019-06-01",
             "dependsOn": [
-                "Microsoft.Network/virtualNetworks/dev-SentiaWordpress-Bernardo-vnet",
+                "Microsoft.Network/virtualNetworks/dev-SentiaWordpress-Bernardo-vnet"
             ],
             "type": "Microsoft.ContainerService/managedClusters",
             "location": "[parameters('location')]",
