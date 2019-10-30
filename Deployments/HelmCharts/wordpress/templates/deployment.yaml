@@ -33,14 +33,17 @@ spec:
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
-              port: 80 # http
-            initialDelaySeconds: 15
-            timeoutSeconds: 5
+              path: 
+              port: 80 
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            # timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /
-              port: 80 # http
+              path: /wp-admin/setup-config.php
+              port: 80 
+            initialDelaySeconds: 3
+            periodSeconds: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
