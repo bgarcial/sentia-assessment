@@ -387,7 +387,7 @@
           "type": "virtualNetworkRules",
           "apiVersion": "2017-12-01",
           "properties": {
-            "virtualNetworkSubnetId": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet2Name'))]",
+            "virtualNetworkSubnetId": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
             "ignoreMissingVnetServiceEndpoint": true
           },
           "dependsOn": [

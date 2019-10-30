@@ -184,14 +184,14 @@ kubectl create secret docker-registry regcred --docker-server=myregistryname.azu
 - External db
 
 ```
-helm3 install wordpress-site-1 ./Deployments/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=database_user,externalDatabase.password=database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
+helm3 install wordpress-site-1 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
 
 ```
 
-helm upgrade wordpress-site-1 ./zcrm365 --install
+helm upgrade wordpress-site-1 /Deployments/Kubernetes/HelmCharts/wordpress/ --install
 
 ```
-helm3 upgrade wordpress-site-1 ./Deployments/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=database_user,externalDatabase.password=database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
+helm3 upgrade wordpress-site-1 /Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=database_user,externalDatabase.password=database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
 
 ```
 
@@ -205,4 +205,5 @@ helm3 install wordpress-site-1 stable/wordpress --set image.registry=my-registry
 
 ```
 ⟩ mysql -u sentia@wordpresssentiaassessment-db -p -h 191.237.232.75
+CREATE DATABASE wordpress2;
 ```
