@@ -207,7 +207,7 @@
     },
     "virtualNetworkRuleName": {
       "type": "string",
-      "defaultValue": "AllowSubnet",
+      "defaultValue": "AllowAksSubnet",
       "metadata": {
         "description": "Virtual Network RuleName"
       }
