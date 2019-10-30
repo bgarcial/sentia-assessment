@@ -181,7 +181,7 @@ kubectl create secret docker-registry regcred --docker-server=myregistryname.azu
 ```
 
 
-- External db
+- External db with environment variables
 
 ```
 helm3 install wordpress-site-1 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
@@ -190,10 +190,7 @@ helm3 install wordpress-site-1 ./Deployments/Kubernetes/HelmCharts/wordpress/  -
 
 helm upgrade wordpress-site-1 /Deployments/Kubernetes/HelmCharts/wordpress/ --install
 
-```
-helm3 upgrade wordpress-site-1 /Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=database_user,externalDatabase.password=database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
 
-```
 
 - Referencing secrets name and values in detail via helm
 

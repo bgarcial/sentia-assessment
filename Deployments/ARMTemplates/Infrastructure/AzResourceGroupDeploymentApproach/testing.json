@@ -376,7 +376,8 @@
           "backupRetentionDays": "[parameters('backupRetentionDays')]",
           "geoRedundantBackup": "[parameters('geoRedundantBackup')]",
           "storageAutoGrow": "[parameters('storageAutoGrow')]"   
-        }
+        },
+        "sslEnforcement": "Disabled"
       },
       "tags": {
         "Environment": "[parameters('environmentName')]"
