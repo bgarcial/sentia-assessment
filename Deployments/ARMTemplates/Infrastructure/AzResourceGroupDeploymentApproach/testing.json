@@ -337,6 +337,10 @@
             "type": "VirtualMachineScaleSets",
             "vnetSubnetID": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
             "maxPods": "[variables('maxPods')]"
+            // "availabilityZones": [
+            //     "1",
+            //     "2"
+            // ]
           }
         ],
         "servicePrincipalProfile": {
@@ -350,6 +354,21 @@
           "dnsServiceIP": "[parameters('dnsServiceIP')]",
           "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
         }
+      },
+      "tags": {
+        "Environment": "[parameters('environmentName')]"
+      }
+    },
+    {
+      "apiVersion": "2019-02-01",
+      "type": "Microsoft.Network/publicIpAddresses",
+      "name": "[concat(parameters('k8s_cluster_name'), '-StaticPublicIpAdress')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
       },
       "tags": {
         "Environment": "[parameters('environmentName')]"
