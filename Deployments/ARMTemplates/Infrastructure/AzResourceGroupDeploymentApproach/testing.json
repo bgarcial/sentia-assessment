@@ -344,7 +344,7 @@
             "vmSize": "[parameters('agentVMSize')]",
             "osType": "[variables('osType')]",
             "storageProfile": "ManagedDisks",
-            "availabilityProfile": "VirtualMachineScaleSets",
+            "type": "VirtualMachineScaleSets",
             "vnetSubnetID": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
             "maxPods": "[variables('maxPods')]",
             "availabilityZones": [
