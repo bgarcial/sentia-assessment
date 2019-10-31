@@ -5,8 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: wordpresssentiaassessment.azurecr.io/wordpress
-  tag: 5.2.4
+  repository: wordpresssentiaassessment.azurecr.io
+  tag: wordpress:5.2.4
   pullPolicy: Always #IfNotPresent
 
 imagePullSecrets: 
