@@ -360,21 +360,6 @@
       }
     },
     {
-      "apiVersion": "2019-02-01",
-      "type": "Microsoft.Network/publicIpAddresses",
-      "name": "[concat(parameters('k8s_cluster_name'), '-StaticPublicIpAdress')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Basic"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Static"
-      },
-      "tags": {
-        "Environment": "[parameters('environmentName')]"
-      }
-    },
-    {
       "apiVersion": "2017-12-01",
       "type": "Microsoft.DBforMySQL/servers",
       "location": "[parameters('location')]",
