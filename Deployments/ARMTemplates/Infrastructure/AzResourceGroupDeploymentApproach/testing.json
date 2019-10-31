@@ -336,11 +336,11 @@
             "storageProfile": "ManagedDisks",
             "type": "VirtualMachineScaleSets",
             "vnetSubnetID": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
-            "maxPods": "[variables('maxPods')]"
-            // "availabilityZones": [
-            //     "1",
-            //     "2"
-            // ]
+            "maxPods": "[variables('maxPods')]",
+            "availabilityZones": [
+                "1",
+                "2"
+            ]
           }
         ],
         "servicePrincipalProfile": {
