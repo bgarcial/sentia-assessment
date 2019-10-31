@@ -73,7 +73,7 @@
     // },
     "nodeCount": {
       "type": "int",
-      "defaultValue": 3,
+      "defaultValue": 4,
       "metadata": {
           "description": "The number of nodes that should be created along with the cluster."
       },
@@ -326,6 +326,16 @@
         "kubernetesVersion":"[parameters('kubernetesVersion')]",
         "enableRBAC": true,
         "dnsPrefix": "[concat(parameters('k8s_cluster_name'),'-dns')]",
+        "masterProfile": {
+          "count": 5,
+          "dnsPrefix": "",
+          "vmSize": "Standard_D2_v2",
+          "availabilityProfile": "VirtualMachineScaleSets",
+          "availabilityZones": [
+              "1",
+              "2"
+          ]
+        },
         "agentPoolProfiles":[
           {
             "name":"defaultpool",
@@ -334,7 +344,7 @@
             "vmSize": "[parameters('agentVMSize')]",
             "osType": "[variables('osType')]",
             "storageProfile": "ManagedDisks",
-            "type": "VirtualMachineScaleSets",
+            "availabilityProfile": "VirtualMachineScaleSets",
             "vnetSubnetID": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks/subnets',parameters('vnetName'),parameters('subnet1Name'))]",
             "maxPods": "[variables('maxPods')]",
             "availabilityZones": [
