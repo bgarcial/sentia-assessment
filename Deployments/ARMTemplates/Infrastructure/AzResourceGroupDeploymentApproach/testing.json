@@ -359,7 +359,7 @@
         },
         "networkProfile": {
           "networkPlugin": "[variables('networkPlugin')]",
-          "loadBalancerSku": "Basic",
+          "loadBalancerSku": "standard",
           "serviceCidr": "[parameters('serviceCidr')]",
           "dnsServiceIP": "[parameters('dnsServiceIP')]",
           "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
