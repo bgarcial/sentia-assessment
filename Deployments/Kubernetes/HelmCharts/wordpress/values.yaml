@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   registry: wordpresssentiaassessment.azurecr.io
-  repository: sites/wordpress 
+  repository: wordpress 
   tag: latest
   pullPolicy: Always #IfNotPresent
 
