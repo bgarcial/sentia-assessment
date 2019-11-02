@@ -10,8 +10,8 @@ image:
   tag: latest
   pullPolicy: Always #IfNotPresent
 
-# imagePullSecrets: 
-#  - name: regcred
+imagePullSecrets: 
+ - name: regcred
 nameOverride: ""
 fullnameOverride: ""
 
