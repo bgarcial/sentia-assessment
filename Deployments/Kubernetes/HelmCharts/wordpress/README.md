@@ -184,7 +184,7 @@ kubectl create secret docker-registry regcred --docker-server=myregistryname.azu
 - External db with environment variables
 
 ```
-helm3 install wordpress-site-1 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
+helm3 install --upgrade wordpress-site-4 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
 
 ```
 
@@ -197,6 +197,55 @@ helm upgrade wordpress-site-1 /Deployments/Kubernetes/HelmCharts/wordpress/ --in
 
 
 helm3 install wordpress-site-1 stable/wordpress --set image.registry=my-registryname.azurecr.io,image.repository=wordpress,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=site1,wordpressPassword=mypostgrespassword,wordpressEmail=botibagl@gmail.com,mariadb.enabled=false,externalDatabase.host.valueFrom.secretKeyRef.key=host,externalDatabase.host.valueFrom.secretKeyRef.name=mysql-wordpress-secrets,externalDatabase.user.valueFrom.secretKeyRef.key=username,externalDatabase.user.valueFrom.secretKeyRef.name=mysql-wordpress-secrets,externalDatabase.password.valueFrom.secretKeyRef.key=password,externalDatabase.password.valueFrom.secretKeyRef.name=mysql-wordpress-secrets,externalDatabase.database.valueFrom.secretKeyRef.key=database,externalDatabase.database.valueFrom.secretKeyRef.name=mysql-wordpress-secrets,externalDatabase.port=3306
+
+
+## Automating wordpress sites creation
+
+# Creating database
+
+```
+az mysql db create --name wordpresswebsite1 --resource-group myResourceGroup --server-name sofi
+{
+  "charset": "latin1",
+  "collation": "latin1_swedish_ci",
+  "id": "/subscriptions/xxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/sofi/databases/wordpresswebsite1",
+  "name": "wordpresswebsite1",
+  "resourceGroup": "myResourceGroup",
+  "type": "Microsoft.DBforMySQL/servers/databases"
+}
+```
+## Creating database From PowerShell
+
+```
+PS /home/bgarcial/projects/sentia-assesment> New-AzResource -ResourceType "Microsoft.DBforMySQL/servers/databases/" `
+>> -ResourceName sofi/wordpresswebsite2 `
+>> -ApiVersion 2017-12-01 `
+>> -ResourceGroupName myResourceGroup `
+>> -PropertyObject @{collation='utf8_general_ci'; charset='utf8'}
+
+Confirm
+Are you sure you want to create the following resource: 
+/subscriptions/9148bd11-f32b-4b5d-a6c0-5ac5317f29ca/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/sofi/databases/wordpresswebsite2
+[Y] Yes  [N] No  [S] Suspend  [?] Help (default is "Y"): y
+                                                                                                                                                                             Name              : wordpresswebsite2                                                                                                                                        ResourceId        : /subscriptions/9148bd11-f32b-4b5d-a6c0-5ac5317f29ca/resourceGroups/myResourceGroup/providers/Microsoft.DBforMySQL/servers/sofi/databases/wordpresswebsit                     e2                                                                                                                                                       ResourceName      : sofi/wordpresswebsite2                                                                                                                                   
+ResourceType      : Microsoft.DBforMySQL/servers/databases
+ResourceGroupName : myResourceGroup
+SubscriptionId    : 9148bd11-f32b-4b5d-a6c0-5ac5317f29ca
+Properties        : @{charset=utf8; collation=utf8_general_ci}
+
+
+PS /home/bgarcial/projects/sentia-assesment> 
+
+
+```
+
+## Creating users from PowerShell 
+MC_sentia-assessment_WordpressSentiaAssessment-aks_westeurope
+
+```
+
+```
+
 
 - Connecting to MySQL
 
