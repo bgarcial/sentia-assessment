@@ -5,13 +5,13 @@
 replicaCount: 1
 
 image:
-  registry: wordpresssentiaassessment.azurecr.io
-  repository: customize_wordpress
+  # registry: wordpresssentiaassessment.azurecr.io
+  repository: wordpresssentiaassessment.azurecr.io/customize_wordpress
   tag: 5.2.4
   pullPolicy: Always #IfNotPresent
 
 # imagePullSecrets: 
-#  - name: regcred
+#   - name: regcred
 nameOverride: ""
 fullnameOverride: ""
 
