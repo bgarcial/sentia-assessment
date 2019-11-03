@@ -1,3 +1,58 @@
+## Docker image
+
+- Build the image 
+
+```
+~/projects/sentia-assesment/WordpressSite · (master±)
+⟩ docker build -t customize_wordpress:5.2.4 .
+
+```
+Create the `customize_wordpress:5.2.4` image
+
+
+- Creating tag
+
+```
+~/projects/sentia-assesment/WordpressSite · (master±)
+⟩ docker tag customize_wordpress:5.2.4 wordpresssentiaassessment.azurecr.io/customize_wordpress:5.2.4
+[I] 
+
+```
+- Push the image
+
+```
+~/projects/sentia-assesment/WordpressSite · (master±)
+⟩ docker push wordpresssentiaassessment.azurecr.io/customize_wordpress:5.2.4
+The push refers to repository [wordpresssentiaassessment.azurecr.io/customize_wordpress]
+b63469233da6: Pushed 
+b032b61b15b2: Pushed 
+786ef01f4a4a: Pushed 
+5d065842e2b1: Pushed 
+02e5b86b9d8d: Pushed 
+f190d03dd9cf: Pushed 
+31edc4603d49: Pushed 
+a6c798e344c1: Pushed 
+7ad4f8a271af: Pushed 
+8b9e7bae16d7: Pushed 
+4c31d76c6594: Pushed 
+983090088b87: Pushed 
+53f8a4a17b10: Pushed 
+01af4509e166: Pushed 
+37a065eea6b3: Pushed 
+8067bb2f50e2: Pushed 
+ba31a1dbfcfb: Pushed 
+3e84f33ac944: Pushed 
+9f9d470ac131: Pushed 
+86569e4ec54b: Pushed 
+12fe3564ccac: Pushed 
+4e9b2aba858c: Pushed 
+b67d19e65ef6: Pushed 
+5.2.4: digest: sha256:dc62844f946a49f2e724fa38bad6e2cab73a4561b22b690876ab5534febd3569 size: 5128
+[I] 
+~/projects/sentia-assesment/WordpressSite · (master±)
+
+```
+
 
 - CReating IP address
 ```
@@ -184,10 +239,10 @@ kubectl create secret docker-registry regcred --docker-server=myregistryname.azu
 - External db with environment variables
 
 ```
-helm3 install --upgrade wordpress-site-4 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=5.2.4,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
+helm3 install  wordpress-site-4 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.registry=$acr_login_server,image.repository=$acr_repository,image.tag=$image_tag,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
 
 ```
-
+--upgrade
 helm upgrade wordpress-site-1 /Deployments/Kubernetes/HelmCharts/wordpress/ --install
 
 
