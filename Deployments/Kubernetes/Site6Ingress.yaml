@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    # add an annotation indicating the issuer to use.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx 
+  name: wordpress-site-6-ingress
+  namespace: site-6
+spec:
+  rules:
+  - host: site6.bgarcial.me
+    http:
+      paths:
+      - backend:
+          serviceName: wordpress-site-6
+          servicePort: 80
+        path: /
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - site6.bgarcial.me
+    secretName: letsencrypt-prod-site-6
