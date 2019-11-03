@@ -361,7 +361,40 @@ kubectl create secret docker-registry regcred --docker-server=myregistryname.azu
 - External db with environment variables
 
 ```
-helm3 install  wordpress-site-4 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.repository=$acr_repository,image.tag=$image_tag,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306
+helm3 install  wordpress-site-6 ./Deployments/Kubernetes/HelmCharts/wordpress/  --set image.repository=$acr_repository,image.tag=$image_tag,image.pullPolicy=Always,wordpressUsername=$wordpressUsername,wordpressPassword=$wordpressPassword,wordpressEmail=$wordpressEmail,mariadb.enabled=false,externalDatabase.host=$database_host,externalDatabase.user=$database_user,externalDatabase.password=$database_password,externalDatabase.database=$database_name,externalDatabase.port=3306,wordpressSkipInstall=true,
+``
+```
+ helm3 install wordpress-site-6 ./Deployments/Kubernetes/HelmCharts/wordpress \
+      --set image.repository=$acr_repository \
+      --set image.tag=$image_tag \
+      --set image.pullPolicy=Always \
+      --set wordpressUsername=$wordpressUsername \
+      --set wordpressPassword=$wordpressPassword \
+      --set wordpressEmail=$wordpressEmail \
+      --set mariadb.enabled=false \
+      --set externalDatabase.host=$database_host \
+      --set externalDatabase.user=$database_user \
+      --set externalDatabase.password=$database_password \
+      --set externalDatabase.database=$database_name \
+      --set externalDatabase.port=3306 \
+      --set wordpressSkipInstall=true \
+      --namespace site-6 
+NAME: wordpress-site-6
+LAST DEPLOYED: Sun Nov  3 16:56:19 2019
+NAMESPACE: site-6
+STATUS: deployed
+REVISION: 1
+NOTES:
+1. Get the application URL by running these commands:
+  export POD_NAME=$(kubectl get pods --namespace site-6 -l "app.kubernetes.io/name=wordpress,app.kubernetes.io/instance=wordpress-site-6" -o jsonpath="{.items[0].metadata.name}")
+  echo "Visit http://127.0.0.1:8080 to use your application"
+  kubectl port-forward $POD_NAME 8080:80
+```
+
+
+
+
+fullnameOverride=https://site6.bgarcial.me/
 
 
 ```
