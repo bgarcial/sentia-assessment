@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: wordpress-site
+  labels:
+    app: wordpress
+spec:
+  replicas: 3
+  selector:
+	  matchLabels:
+  	  app: wordpress
+  template:
+	  metadata:
+  	  labels:
+    	    app: wordpress
+	  spec:
+  	  containers:
+  	  - name: wordpress
+    	    image: wordpresssentiaassessment.azurecr.io/customize_wordpress:5.2.4
