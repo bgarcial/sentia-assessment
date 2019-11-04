@@ -4,15 +4,18 @@ metadata:
   name: {{ include "wordpress.fullname" . }}
   labels:
     {{- include "wordpress.labels" . | nindent 4 }}
+    app: wordpress
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "wordpress.selectorLabels" . | nindent 6 }}
+      app: wordpress
   template:
     metadata:
       labels:
         {{- include "wordpress.selectorLabels" . | nindent 8 }}
+        app: wordpress
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

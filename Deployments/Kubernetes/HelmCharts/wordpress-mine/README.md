@@ -351,20 +351,20 @@ helm3 install  wordpress-site-6 ./Deployments/Kubernetes/HelmCharts/wordpress/  
 ``
 ```
  helm3 install wordpress-site-6 ./Deployments/Kubernetes/HelmCharts/wordpress \
-      --set image.repository=$acr_repository \
-      --set image.tag=$image_tag \
-      --set image.pullPolicy=Always \
-      --set wordpressUsername=$wordpressUsername \
-      --set wordpressPassword=$wordpressPassword \
-      --set wordpressEmail=$wordpressEmail \
-      --set mariadb.enabled=false \
-      --set externalDatabase.host=$database_host \
-      --set externalDatabase.user=$database_user \
-      --set externalDatabase.password=$database_password \
-      --set externalDatabase.database=$database_name \
-      --set externalDatabase.port=3306 \
-      --set wordpressSkipInstall=true \
-      --namespace site-6 
+        --set image.repository=$acr_repository \
+        --set image.tag=$image_tag \
+        --set image.pullPolicy=Always \
+        --set wordpressUsername=$wordpressUsername \
+        --set wordpressPassword=$wordpressPassword \
+        --set wordpressEmail=$wordpressEmail \
+        --set mariadb.enabled=false \
+        --set externalDatabase.host=$database_host \
+        --set externalDatabase.user=$database_user \
+        --set externalDatabase.password=$database_password \
+        --set externalDatabase.database=$database_name \
+        --set externalDatabase.port=3306 \
+        --set wordpressScheme=true \
+        --namespace site-5
 NAME: wordpress-site-6
 LAST DEPLOYED: Sun Nov  3 16:56:19 2019
 NAMESPACE: site-6
