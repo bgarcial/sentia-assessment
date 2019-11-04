@@ -171,7 +171,13 @@ traffic from `aks-subnet`](https://github.com/bgarcial/sentia-assessment/blob/ma
 
 Kubernetes as an orchestration container services is used to manage the Wordpress application and get
 the scalability and flexibility requirements
-Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes and replica wordpresss services  
+Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes where the the wordpress services are (pods)  
+
+![alt text](https://cldup.com/MWwS6kBZWc.jpg "Kubernetes Behavior")
+
+
+
+TALK ABOUT DETAILED K8S DIAGRAM
 
 
 We will use our own Ingress controller deployment inside Kubernetes to expose the WordPress sites to Internet. 
@@ -188,6 +194,12 @@ Like I mentioned yesterday the ResourceGroup and the ServicePrincipal (and its s
 This is something to include inside the template.
  
 The deployment of these infrastructure resources are being executed from Powershell at Az-ResourceGroup level
+
+
+
+Architecture Complete Landscape High level
+
+![alt text](https://cldup.com/KfhPsd0zYk.jpg "Kubernetes Behavior")
 
 
  
