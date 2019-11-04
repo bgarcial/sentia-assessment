@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY etc/apache2/apache2.conf /etc/apache2/apache2.conf
 
+# COPY .htaccess /var/www/html
+
 # TODO INSERT HERE:
 # ADD ./plugin /var/ww/html/wp-content/plugins/plugin
 # Plugins - https://github.com/docker-library/wordpress/issues/341
