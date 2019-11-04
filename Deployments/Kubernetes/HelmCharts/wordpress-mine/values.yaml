@@ -14,7 +14,7 @@ image:
 #   - name: regcred
 
 wordpressScheme: https
-wordpressSkipInstall: false
+# wordpressSkipInstall: false
 
 serviceAccount:
   # Specifies whether a service account should be created
