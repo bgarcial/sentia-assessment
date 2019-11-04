@@ -1,14 +1,5 @@
 # Documentation
----
->By documentation, I mean a set of architectural points of view that describe:
-   >* How the system is organized;
-   >* What are the procedures to maintain the system;
-   >* Etc.
-  In short, how will you explain to a stakeholder how the system works?
->2. HA means different things to different people. I prefer to approach it with math,
-    defining it numerically and based on facts.
- 
----
+
 
 This section presents the documentation about the process solution approach to address the assigment [presented here](https://github.com/sentialabs/public-cloud-recruitment/blob/master/ASSIGNEMENT.md)
 
@@ -56,10 +47,7 @@ be futureproof and expandable with new WordPress sites with minimal effort.
 - Please document any assumptions and decisions you have made.
 - Please include a presentation of the results within slides, ready to be presented to our client.
 
-
-
 ---
-
 
 ## 2. Assumptions
 According to the customer requirements previously mentioned, is necessary to assure and improve the availability in the approach solution.
@@ -92,12 +80,14 @@ Note: Use kubernetes require to beard in mind some security concerns.
 
 #### 2.2.1 **AKS cluster with Availability zones** (*Preview feature, excluded from the service level agreements*)
 
-This will allow distribute the AKS nodes in multiple zones in order to have failure tolerance in one of those zones.
+This will allow [distribute the AKS nodes in multiple zones](https://docs.microsoft.com/en-us/azure/aks/availability-zones) in order to have failure tolerance in one of those zones.
 An Azure Standard Load Balancer is enabled for managing and traffic distribution across zones.
+
+In this approach solution, AKS HA will be used across two availability zones.
 
 ##### Scalability
 
-Several scalability benefits in AKS clusters. However, later I will mentioned
+Several scalability benefits in AKS clusters.
 
 - Kubernetes allow to control the number of instances of a specific service or pod
   - `replicas: x` on the `kind: Deployment` resource 
@@ -123,8 +113,85 @@ Applying namespace scope per customer
 > Each node in the cluster has a component called `kube-proxy` that is in charge of routing the traffic from anywhere in the cluster to the target Pod.
 Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy. 
 
-The above features are several benefits provide by Kubernetes to manage deployments. Due to time reasons, in this approach solution only will be addressed the namespace scope per customer deployment, which opens the door to all other recommendations/benefits presented.   
+The above features are several benefits provide by Kubernetes to manage deployments. 
+Due to time reasons, in this approach solution only will be addressed the namespace scope per customer deployment, which opens the door to all other recommendations/benefits presented.
 
+---
+
+So, the points 2.1 and 2.2 are oriented to keep and improve the high availability required by the customers deployment.
+According to it, this first high level perspective HA diagram is presented, keeping in mind the MySQL and AKS contexts deployments.
+
+![alt text](https://cldup.com/-sNtukfxDS.jpg "HA approach")
+In this approach solution two availability zones will be created. 
+*Screenshot taken from Google maps*
+
+---
+
+## 3. Deployment Architecture
+
+Some diagrams and short explanations are presented here. 
+
+### 3.1. How the system is organized?
+
+This is the [ARM Template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json) with the following Architecture components:
+
+#### 3.1.2. Core components
+
+**A Virtual Network and two subnetworks** were defined with availability zones scope:
+
+- [AssessmentVnetTesting](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L273) 
+  - [aks-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L279): Here, the Kubernetes cluster, aks nodes and pod ip address will be located
+    - Microsoft.SQL endpoint 
+  - [persistence-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L291): For Azure database for MySQL
+    - Microsoft.SQL endpoint
+    - Microsoft.Storage endpoint
+
+##### About Virtual Network services endpoints.
+
+Those [endpoints](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-service-endpoints-overview) allow a direct relation between a virtual network and the Azure services, making use of the network private address space, using an internal private ip address. 
+>This allow to secure your critical Azure service resources to only your virtual networks
+
+The `aks-subnet` and `persistence-subnet` has two endpoints
+`Microsoft.SQL` endpoint for both subnets
+`Microsoft.Storage` for `persistence-subnet`
+
+Of this way, is warranted direct communication toward Azure MySQL and storage accounts between and from those two subnets and only in the `AssessmentVnetTesting`.
+
+![alt text](https://cldup.com/jxQHbvtg8i.jpg "NetworkServiceEndpoints")
+
+In addition, a virtual network rule in Azure database for MySQL instance was defined [in order to only accept
+traffic from `aks-subnet`](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L405) and [a rule to allow traffic from my home ip address](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L418).
+
+![alt text](https://cldup.com/NA0pDsY_qA.jpg "VirtualNetworkRule")
+
+
+#### 3.1.3. Infrastructure Services:
+
+**Azure Kubernetes Service**
+
+Kubernetes as an orchestration container services is used to manage the Wordpress application and get
+the scalability and flexibility requirements
+Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes and replica wordpresss services  
+
+
+We will use our own Ingress controller deployment inside Kubernetes to expose the WordPress sites to Internet. 
+When we create the Ingress process inside Kubernetes, the Ingress controller is in able to manage to become to be a Load Balancer
+It'll act as an external Load Balancer, that's why the Kubernetes cluster does not include an LB, at least at the moment.
+
+#### 3.1.4.Platform as a Service Components:
+Azure Database for MySQL server instance
+Rule name to allow access from my home IP address.
+It could be necessary add later the Sentia HQ IP address. Just in case.
+
+Azure Container Registry to store Wordpress Docker images
+Like I mentioned yesterday the ResourceGroup and the ServicePrincipal (and its secrets used) are being created manually previously to the execution of the deployment.
+This is something to include inside the template.
+ 
+The deployment of these infrastructure resources are being executed from Powershell at Az-ResourceGroup level
+
+
+ 
+---
 
 
 
