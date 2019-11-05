@@ -365,15 +365,29 @@ This control plane contain the **kubernetes master process**, which refers to a 
 Well, all those master and node components described above, **should be distributed across availability zones that I defined.**
 
 So, I decided:
-- **Use 2 Availability Zones** for master profile ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L334)) and **2 availability zones** for agentpool profile ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L350))
+- **Use 2 Availability Zones** for master profile ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L334)) and **2 availability zones** for agentpool profile ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L350))
 In this approach solution, AKS HA was used across two availability zones, due to the customer had two servers (hosting application environment) and two MySQL servers to achieve HA in their existing approach.
 
-- Node count: Is the number of nodes in the node pool defined to k8s.
-  >[To ensure HA](https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md#availability-zones), each profile (master and node) must define at least two nodes per zone. For example, an agent pool profile with 2 zones must have at least 4 nodes total: 
+- **Node count**: Is the number of nodes in the node pool defined to k8s.
+  >[To ensure HA](https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md#availability-zones), each profile (master and node) must define at least two nodes per zone. For example, an agent pool profile with 2 zones must have at least 4 nodes total.
+
+  The agentpool profile (node components) has 4 nodes in total ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L343))
+
+  The master profile (master component) has 5 nodes in total ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L330))   
   
-The number and size of nodes in the primary node pool in your cluster. For production workloads, at least 3 nodes are recommended for resiliency. For development or test workloads, only one node is required. You will not be able to change the node size after cluster creation, but you will be able to change the number of nodes in your cluster after creation. If you would like additional node pools, you will need to enable the "X" feature on the "Scale" tab which will allow you to add more node pools after creating the cluster. Learn more about node pools in Azure Kubernetes Service
-- - 2 and 4 nodes to ensure define 4 zones per node. 
-https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md
+ 
+ - **Type of nodepool profile and masterprofile** 
+   This is the type of virtual machine which support those nodepools defined here
+   
+   I decided to choose **[VirtualMachineScaleSets](https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-autoscale-overview)** to both aksdefault pool ([ARM Template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L347)) and master profile ([ARM Template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L347))
+   
+   This decision was made in order to allow [adjust the number of nodes inside an Azure Kubernetes cluster](https://docs.microsoft.com/en-us/azure/aks/cluster-autoscaler) and to keep up with Wordpress application demands 
+   
+   When I did this and the kubernetes cluster was deployed from ARM template, I could see in Azure portal the following features options
+
+  ![alt text](https://cldup.com/w9WcRNkWdh.png "AKS with Autoscale nodes")
+   
+
 
 
 
