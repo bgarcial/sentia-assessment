@@ -200,12 +200,104 @@ This is the [ARM Template](https://github.com/bgarcial/sentia-assessment/blob/ma
 **A Virtual Network and two subnetworks** were defined with availability zones scope:
 
 - [AssessmentVnetTesting](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L273) 
-  - [aks-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L279): Here, the Kubernetes cluster, aks nodes and pod ip address will be located
+  - [aks-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L279): Here, the Kubernetes cluster, aks nodes and pod ip address will be located.
     - Microsoft.SQL endpoint 
   - [persistence-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L291): For Azure database for MySQL
     - Microsoft.SQL endpoint
     - Microsoft.Storage endpoint
 
+The Vnet and subnets have the following configuration:
+- `AssessmentVnetTesting` has [an address space of 10.0.0.0/8](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L21)
+  - It is an A class private address whith range between `10.0.0.0 - 10.255.255.255`   and netmask `255.0.0.0`, that's why `/8`
+- `aks-subnet` has [an address space of 10.240.0.0/16](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L28)
+  - It is an address range supported within Vnet address space, by consequence also within A class and private address range as well with range between `10.240.0.0 - 10.240.255.255`.
+  - It netmask is `255.255.0.0` that's why `/16` with a capacity of 65.536 adresses to grow. 
+  Actually, with the AKS deployment I have around of 65536 addresses available.
+
+  ![alt text](https://cldup.com/gRNyd3IIFR.png "Aks Subnet configuration")
+   
+  It means that 338 addresses has been assigned to the `aks-defaultpool` which contain 3 nodes into kubernetes environment.
+  So if we go to the Vnet configuration, we can see in **Connected devices** option all these addresses assigned
+  and distributed across different nodes in the pool (`aks-defaultpool-34253081-vmss (instance 0)`, `aks-defaultpool-34253081-vmss (instance 1)` and `aks-defaultpool-34253081-vmss (instance 2)`)
+
+  ![alt text](https://cldup.com/cQYKVLk-vK.png "Aks Subnet ip addresses connected/reserved")
+  ![alt text](https://cldup.com/dZvVK6nCP6.png  "Aks Subnet ip addresses connected/reserved")
+  ![alt text](https://cldup.com/8dTXt52J5k.png  "Aks Subnet ip addresses connected/reserved")
+  
+  But ... **why the addresses already were assigned or taken by Kubernetes environment through it nodes?**
+  
+  Well, let's talk in short terms about **Azure Kubernetes** networking modes behaviorI can experiment this networking mode behavior:
+  Azure Kubernetes in general has two kinds of networks types:
+  - **Basic Networking**: 
+    - AKS manage it's own virtual network and expose only public IPs
+    - Pods IPs are accessible from within the cluster.
+    - Only publicly exposed services are accessible outside the cluster.
+  - **Advanced Networking**:
+    - AKS’s nodes are deployed within a specified Azure Virtual Network we control.
+    - Is possible deploy AKS inside an existing Vnet and exposes private IP
+      - This allows us to keep the services running on AKS on private IPs.
+        - **It's exactly I am doing with the IP addressess inside aks-subnet above in the pictures**  
+      - It also allows us to make them accessible from on premise network.
+        - **Just in case**
+
+    **So, use advancing networking mode will allow us to integrate a new aks-nodepool (more nodes inside existing AKS cluster) or even a new AKS cluster into `AssessmentVnetTesting` in a short future.**
+
+**IMPORTANT - PROS AND CONS CNI**
+- Also important to keep in mind here is that Kubernetes as a general service implement two kind of network plugins  
+[kubenet](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#kubenet) and [CNI](https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#cni) (which is a [container network specification based](https://github.com/containernetworking/cni/blob/master/SPEC.md#network-configuration)).
+
+- So if we want to work with Advanced networking mode, we have to use Container network specification as a plugin.
+In the Azure cloud case, it has the [Azure VNET CNI Plugin](https://github.com/Azure/azure-container-networking/blob/master/docs/cni.md), implementing the same Container Networking specification.
+
+  
+I am using CNI network profile in the [arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L247) (it is given by `azure` value)
+
+- With Azure CNI, Basically, both pods and services get a private IP, they belong to the `AssessmentVnetTesting` virtual network. 
+- Services also get a cluster-ip (accessible only from within the cluster).
+- every pod gets an IP address from the subnet and can be accessed directly
+
+If we use Azure CNI, a common issues are:
+
+>- With Azure CNI, a common issue is the assigned IP address range is too small to then add additional nodes when you scale or upgrade a cluster. 
+>- The network team may also not be able to issue a large enough IP address range to support your expected application demands.
+>- Azure CNI could only support a maximum of 8 nodes in the cluster 
+
+**How can I decide to use Azure CNI or Kubenet network profiles?**
+
+- **KUBENET**
+  - I have limited ip address space
+    - Use NAT.
+    - I will not need a huge address space. 
+      - **I have to say that this approach solution, does not require a huge address space.**
+  - Most of the pod communication is within the cluster (**My pods needs to communicate with MySQL managed database service**).
+  - When advanced AKS features such as virtual nodes or Azure Network Policy aren't needed.
+    - **In this Wordpress deployments, I think [I don't need virtual nodes](https://docs.microsoft.com/en-us/azure/aks/virtual-nodes-portal), but I consider important
+      get into Network policies to securize container or pods traffic, that's why CNI was considered.** 
+
+---
+- **AZURE CNI**
+  - I have available IP address. 
+    - **In this deployment, the subnetting scheme was choosen as a testing purposes, but also considering
+     the future growing or more Wordpress sites in new AKS nodes or even new clusters**
+  - In CNI is necessary  to design our Network address space to accommodate future scale outs. 
+    - it has the advantage of not doing NAT and DMASK processes at node level, giving  more performance and it will be faster routing packets.
+  - Most of the pod communication is to resources outside of the cluster.
+      - **The pods are communicating with Azure database for MySQL instance in the `persistence-subnet`**
+  - Use advanced features like [Network policies](https://docs.microsoft.com/en-us/azure/aks/use-network-policies)
+    - **This option was purposed from the beggining of this document at 2.2.1 Managing Deployments on Kubernetes  section**
+      - I consider important to restrict the traffic between namespaces and pods, because despite I am separating wordpress deployments by namespace, by default there is an intercontainer and internamespace communication, so will be necessary restrict the communication between different wordpress deployments to: 
+        - Each Wordpress deployment would have its own apache web server (its own configuration)
+        - Each Wordpress deployment would have its own plugins at Wordpress level. 
+        - Each Wordpress deployment have its own secrets pointing to an specific MySQL database. 
+
+>Also there is some scenarios where will require only CNI. Like setting up Ingress Controller Application Gateway where the backend pool will be the POD ID’s instead of the nodes. And only works if POD IP’s are visible from subnet level (CNI).
+
+**I have a Load Balancer and an Ingress controller, but the backend pools are the aks nodes not the POD IDs.**
+I will talk of this later     
+
+This [google document](https://docs.google.com/document/d/1hN2XXWuxXvO75Ri-IONWnrRDTGW8iaFTNgXRru92I9o/edit?usp=sharing) could reference several article sources which I taken most of the pros and cons discussed above. 
+
+---
 ##### About Virtual Network services endpoints.
 
 Those [endpoints](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-service-endpoints-overview) allow a direct relation between a virtual network and the Azure services, making use of the network private address space, using an internal private ip address. 
