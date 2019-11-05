@@ -83,6 +83,8 @@ I've choose the following specifications:
 - I decided to use local redundant backup and [not geo redundant backup](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L201) due to geo redundant backup store the backups not only within the region in which the MySQL server is deployed, azure also replicate the backup to a paired datacenter in a different region. 
   - At the moment I considered local redundant backup with only West Europe region scope as a good starting point with relation to MySQL high availability deployment. If we wanto to enable a geo-redundant backup is only [change the default value to Enabled in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L203) 
 - The `storageAutoGrow` [also was disabled](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L192) due to in he General Purpose pricing tier I have available a range [between 5GB and 4TB of storage size](https://docs.microsoft.com/en-us/azure/mysql/concepts-pricing-tiers#storage) 
+- The `"sslEnforcement": "Disabled"` also was selected in order to allow connections to MySQL server without need certificates. The inbound connections to MySQL are secure, because of network service endpoints.
+You can see later the **About Virtual Network services endpoints** section to understand how works the services endpoints over subnets in a security context
 
 Always will be a good idea [to stay monitoring MySQL](https://docs.microsoft.com/en-us/azure/mysql/concepts-monitoring) in order to start to re-consider the server configuration parameters
 
@@ -338,6 +340,8 @@ Kubernetes is being created and deployed [across two availability zones](https:/
 
 - **Node size**: The size of the virtual machines that will form the nodes in the cluster.
   - I am using `Standard_D2_v2` for [agent pool profile](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L85) and [master profile](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L332)
+
+  The `Standard_D2_v2` give me **2 vcpus and 7 GiB memory** per node. I have 4 nodes so I have 8 cores and 28 gb of memory.
 
 ---
 **I consider to highlight here the master kubernetes and non master nodes (placed at agent pool profile)**
