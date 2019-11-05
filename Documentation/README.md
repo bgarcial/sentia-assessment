@@ -339,7 +339,8 @@ Kubernetes is being created and deployed [across two availability zones](https:/
 - **Node size**: The size of the virtual machines that will form the nodes in the cluster.
   - I am using `Standard_D2_v2` for [agent pool profile](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L85) and [master profile](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L332)
 
-I consider to highlight here the master kubernetes and non master nodes (placed at agent pool profile)
+---
+**I consider to highlight here the master kubernetes and non master nodes (placed at agent pool profile)**
 
 We got the [k8s control plane](https://kubernetes.io/docs/concepts/#kubernetes-control-plane) which govern how kubernetes communications is performed, maintaining a record of all k8s objects in the system and manage them via control loops in order to respond to changes in the cluster.
 This control plane contain the **kubernetes master process**, which refers to a collection of processes managing the cluster state to make global decisions about scheduling, starting pods, etc.
@@ -360,17 +361,20 @@ This control plane contain the **kubernetes master process**, which refers to a 
 
 - kubelet: An agent that runs on each node in the cluster. It makes sure that containers are running in a pod.
 - kube-proxy: s a network proxy that runs on each node in the cluster. It maintains network rules on nodes. These network rules allow network communication to your Pods from network sessions inside or outside of your cluster.
-
+---
 Well, all those master and node components described above, **should be distributed across availability zones that I defined.**
 
 So, I decided:
-- **Use 2 Availability Zones** for master ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L334)) and **2 availability zones** for agentpool profile ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L350))
+- **Use 2 Availability Zones** for master profile ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L334)) and **2 availability zones** for agentpool profile ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L350))
 In this approach solution, AKS HA was used across two availability zones, due to the customer had two servers (hosting application environment) and two MySQL servers to achieve HA in their existing approach.
 
-- 
-- 
-- 2 and 4 nodes to ensure define 4 zones per node. 
+- Node count: Is the number of nodes in the node pool defined to k8s.
+  >[To ensure HA](https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md#availability-zones), each profile (master and node) must define at least two nodes per zone. For example, an agent pool profile with 2 zones must have at least 4 nodes total: 
+  
+The number and size of nodes in the primary node pool in your cluster. For production workloads, at least 3 nodes are recommended for resiliency. For development or test workloads, only one node is required. You will not be able to change the node size after cluster creation, but you will be able to change the number of nodes in your cluster after creation. If you would like additional node pools, you will need to enable the "X" feature on the "Scale" tab which will allow you to add more node pools after creating the cluster. Learn more about node pools in Azure Kubernetes Service
+- - 2 and 4 nodes to ensure define 4 zones per node. 
 https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md
+
 
 
 The following diagram try to detail the internal Kubernetes environment behavior when a Wordpress service is deployed into Kubernetes. 
