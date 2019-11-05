@@ -214,11 +214,13 @@ The Vnet and subnets have the following configuration:
 - `aks-subnet` has [an address space of 10.240.0.0/16](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L28)
   - It is an address range supported within Vnet address space, by consequence also within A class and private address range as well with range between `10.240.0.0 - 10.240.255.255`.
   - It netmask is `255.255.0.0` that's why `/16` with a capacity of 65.536 adresses to grow. 
-  Actually, with the AKS deployment I have around of 65536 addresses available.
+  Actually, with the AKS deployment I have around of 65.198 addresses available.
 
   ![alt text](https://cldup.com/gRNyd3IIFR.png "Aks Subnet configuration")
    
   It means that 338 addresses has been assigned to the `aks-defaultpool` which contain 3 nodes into kubernetes environment.
+  
+  
   So if we go to the Vnet configuration, we can see in **Connected devices** option all these addresses assigned
   and distributed across different nodes in the pool (`aks-defaultpool-34253081-vmss (instance 0)`, `aks-defaultpool-34253081-vmss (instance 1)` and `aks-defaultpool-34253081-vmss (instance 2)`)
 
@@ -297,7 +299,9 @@ If we use Azure CNI, a common issues are:
 >Also there is some scenarios where will require only CNI. Like setting up Ingress Controller Application Gateway where the backend pool will be the POD ID’s instead of the nodes. And only works if POD IP’s are visible from subnet level (CNI).
 
 **I have a Load Balancer and an Ingress controller, but the backend pools are the aks nodes not the POD IDs.**
-I will talk of this later     
+I will talk of this later.
+
+Is opportune to highlight despite I am using Azure CNI as a plugin Network, the Network policies process is not being implemented due to time reasons. Network policies will be considered as a future work to improve the solution. 
 
 This [google document](https://docs.google.com/document/d/1hN2XXWuxXvO75Ri-IONWnrRDTGW8iaFTNgXRru92I9o/edit?usp=sharing) could reference several article sources which I taken most of the pros and cons discussed above. 
 
