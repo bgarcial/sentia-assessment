@@ -203,11 +203,12 @@ I would like to detail here the Virtual Network configuration section and why I 
 
 - [AssessmentVnetTesting](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L273) 
   - [aks-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L279): Here, the Kubernetes cluster, aks nodes and pod ip address will be located.
-    - Microsoft.SQL endpoint 
-  - [persistence-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L291): For Azure database for MySQL
-    - Microsoft.SQL endpoint
-    - Microsoft.Storage endpoint
+    - aks-subnet has a `Microsoft.SQL` virtual network endpoint 
+  - [persistence-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L291): For Azure database for MySQL. It has the following virtual networks endpoints
+    - `Microsoft.SQL` 
+    - `Microsoft.Storage`
 
+The virtual networks services endpoints will be discussed later. 
 The Vnet and subnets have the following configuration:
 - `AssessmentVnetTesting` has [an address space of 10.0.0.0/8](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L21)
   - It is an A class private address whith range between `10.0.0.0 - 10.255.255.255`   and netmask `255.0.0.0`, that's why `/8`
@@ -303,10 +304,10 @@ I will talk of this later.
 
 Is opportune to highlight despite I am using Azure CNI as a plugin Network, the Network policies process is not being implemented due to time reasons. Network policies will be considered as a future work to improve the solution. 
 
-This [google document](https://docs.google.com/document/d/1hN2XXWuxXvO75Ri-IONWnrRDTGW8iaFTNgXRru92I9o/edit?usp=sharing) could reference several article sources which I taken most of the pros and cons discussed above. 
+This [google document](https://docs.google.com/document/d/1hN2XXWuxXvO75Ri-IONWnrRDTGW8iaFTNgXRru92I9o/edit?usp=sharing) reference several article sources, where I took most of the pros and cons discussed above.
 
 ---
-##### About Virtual Network services endpoints.
+#### About Virtual Network services endpoints.
 
 Those [endpoints](https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-service-endpoints-overview) allow a direct relation between a virtual network and the Azure services, making use of the network private address space, using an internal private ip address. 
 >This allow to secure your critical Azure service resources to only your virtual networks
