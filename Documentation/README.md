@@ -28,11 +28,11 @@ The client is only interested in developing the WordPress sites from an applicat
 
 You have undertaken the task to design the future state of this environment in the public cloud. The solution needs to:
 
-be scalable and flexible.
-be futureproof and expandable with new WordPress sites with minimal effort.
+- Be scalable and flexible.
+- Be futureproof and expandable with new WordPress sites with minimal effort.
 
 #### 1.2.1. Part 1 - Transformation and Migration to the Public Cloud
-- Use control version system to IaC templates (*Azure Resource Manager templates will be used here*).
+- Use control version system to IaC templates (*Azure Resource Manager template was used here*).
 - Provide a design for the designated Azure architecture.
 - Provide ARM templates.
 - Everything else that you need to accompany your solution with based on your approach.
@@ -49,17 +49,18 @@ be futureproof and expandable with new WordPress sites with minimal effort.
 
 ---
 
-## 2. Assumptions
+## 2. Assumptions and Deployment Architecture decisions made
 According to the customer requirements previously mentioned, is necessary to assure and improve the availability in the approach solution.
+
 
 There is  here an opportunity to take advance of the [Azure Service-Level Agreements](https://docs.microsoft.com/en-us/learn/modules/explore-azure-infrastructure/6-service-level-agreements) under the perspective of the resources that this approach solution will be use. (*This will be addressed later*)
 
-So I decided these initial considerations for the architecture.
+So I decided the following considerations for the architecture.
 
 ### 2.1. MySQL database Wordpress sites.
 
-- **Azure Database for MySQL will be used.**
-The wordpress service will be deployed as stateless application, it means *"do not store data or application state to the cluster or to persistent storage"*. That's why is used MySQL as platform as service. 
+- **Azure Database for MySQL was used.**
+The wordpress service will be deployed as [stateless application](https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps), it means *"do not store data or application state to the cluster or to persistent storage"*. That's why is used MySQL as platform as service. 
 Of this way, the wordpress sites will be easily scalable.
 
 In addition, use MySQL as an external service have the following benefits: 
@@ -70,20 +71,33 @@ In addition, use MySQL as an external service have the following benefits:
 - High Availability
   - Availability Zones
   - The database will not be a single point of failure
-- Create "databases on the fly" 
+- Create "databases on the fly".
+
+The Azure database for MySQL manage service was deployed in a HA zone redundant approach.
+According [to this article](https://azure.microsoft.com/en-us/blog/azure-sql-database-now-offers-zone-redundant-premium-databases-and-elastic-pools/), if the MySQL is deployed as a premium database tier, it will support multiple redundant replicas for each database that are automatically 
+provisioned in the same datacenter within a region 
+
+I've choose the following specifications: 
+- [General Purpose](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L165) sku pricing tier was considered as starting point. There is the possibility to migrate to the **Memory optimized** pricing tier, just in case that memory performance, and transaction processing activities require more compute power.
+- Compute Gen 5 [as an sku family](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L174)
+- I decided to use local redundant backup and [not geo redundant backup](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L201) due to geo redundant backup store the backups not only within the region in which the MySQL server is deployed, azure also replicate the backup to a paired datacenter in a different region. 
+  - At the moment I considered local redundant backup with only West Europe region scope as a good starting point with relation to MySQL high availability deployment. If we wanto to enable a geo-redundant backup is only [change the default value to Enabled in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L203) 
+- The `storageAutoGrow` [also was disabled](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L192) due to in he General Purpose pricing tier I have available a range [between 5GB and 4TB of storage size](https://docs.microsoft.com/en-us/azure/mysql/concepts-pricing-tiers#storage) 
+
+Always will be a good idea [to stay monitoring MySQL](https://docs.microsoft.com/en-us/azure/mysql/concepts-monitoring) in order to start to re-consider the server configuration parameters
+
 
 ### 2.2. Hosting Wordpress instances sites
 
 The Wordpress instances sites will be hosted and manage them by **Azure Kubernetes Service** to:
-
-Note: Use kubernetes require to beard in mind some security concerns.
 
 #### 2.2.1 **AKS cluster with Availability zones** (*Preview feature, excluded from the service level agreements*)
 
 This will allow [distribute the AKS nodes in multiple zones](https://docs.microsoft.com/en-us/azure/aks/availability-zones) in order to have failure tolerance in one of those zones.
 An Azure Standard Load Balancer is enabled for managing and traffic distribution across zones.
 
-In this approach solution, AKS HA will be used across two availability zones.
+In this approach solution, AKS HA was used across two availability zones, due to the customer has two servers (hosting application environment) and two MySQL servers to achieve HA in their existing approach.
+
 
 ##### Scalability
 
@@ -100,12 +114,20 @@ Several scalability benefits in AKS clusters.
 
 ##### Managing Deployments on Kubernetes
 
-Applying namespace scope per customer
-  - Restrict the communication between namespaces 
+
+
+
+
+Use of Kubernetes environments require to beard in mind some security concerns like internamespace and intercontainer communications inside the cluster. 
+I am mentioning here how to mitigate that security concerns, but due to time reasons, these thre weren't implemented
+into the kubernetes environment
+
+**Applying namespace scope per customer**
+  - [Restrict the communication between namespaces](https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/04-deny-traffic-from-other-namespaces.md) 
   - MySQL secrets by customers inside its own namespace.
 
-- Manage k8s networks [policies between pods](https://kubernetes.io/docs/concepts/services-networking/network-policies/#the-networkpolicy-resource)
-  - Define rules, which specific traffic is allowed to the selected pods
+- **Manage k8s networks [policies between pods](https://kubernetes.io/docs/concepts/services-networking/network-policies/#the-networkpolicy-resource)**
+  - **Define rules, which specific traffic is allowed to the selected pods**
     - Containers can talk to any other container in the network,
     - Nodes in the cluster can talk to any other container in the network and vice-versa  
 
@@ -113,8 +135,46 @@ Applying namespace scope per customer
 > Each node in the cluster has a component called `kube-proxy` that is in charge of routing the traffic from anywhere in the cluster to the target Pod.
 Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy. 
 
-The above features are several benefits provide by Kubernetes to manage deployments. 
-Due to time reasons, in this approach solution only will be addressed the namespace scope per customer deployment, which opens the door to all other recommendations/benefits presented.
+- **Monitoring usage data resources**
+
+Ok, we have an AKS HA cluster, with two availability zones, with Wordpress deployed as stateless application using
+a MySQL managed database in a HA deployment as well. Those are high availability features under a higher cloud infrastructure perspective. Good for us.
+
+**But what about container process scaling?** 
+I mean, **what about Wordpress kubernetes behavior application?**
+
+In scalability terms, also is important examine the application performance, monitoring the resources usage
+at containers and pods levels in order to evaluate the application performance and find and remove bottlenecks to improve the overall performance.
+
+Kubernetes allow to [monitor resources according to metrics](https://kubernetes.io/docs/tasks/debug-application-cluster/resource-usage-monitoring/#resource-metrics-pipeline) like **CPU** and **memory usage.**
+
+**What if some container or pod is overloaded with traffic?** (despite that we already have a Load Balancer of course ...)
+Maybe the pods could be going down or start to restart itself, or even become to does not accept traffic in some point (according to `readiness` and `liveness` probe parameters in the deployment)
+
+If we are using kubernetes, we can evaluate these kind of situations through monitoring tools like [metrics-server](https://github.com/helm/charts/tree/master/stable/metrics-server) inside our entire cluster.
+
+I am encouraging myself to explore [Horizontal Pod AutoScaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) to automatically scale the number of pods in our Wordpress deployment based on observed CPU utilization as a defined metric.
+
+I started (at least) to define the `HorizontalPodAutoScaler` [resource here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/WordpressHPA.yaml) which make use of a `ReplicaSet` resource [defined here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/WordpressReplicaSet.yaml)
+
+The Kubernetes documentation give [a good walkthrough sample](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/) using Apache as a web server and using a PHP script which performs some CPU intensive computations. 
+
+At the moment this approach to monitor and scale at the container and pods level is considered
+as a improve in the current architecture approach, due to time reasons to implement it because it.
+
+
+**IMPORTANT NOTE**
+The described above features are several benefits provide by Kubernetes to manage our Wordpress deployments 
+Due to time reasons, in this approach solution only will be addressed the namespace scope per customer deployment, which opens the door to all other Network policies recommendations/benefits.
+
+Also independent if an Horizontal Pod Auto Scaler is implemented or not, always will be a good idea involve
+monitoring tools at different levels behavior like usage data resources or webserver, MySQL and load balancer logs. 
+
+In this solution, I am not implementing any monitoring tool in particular, I just using `kubectl logs` as a mechanism to check the Wordpress, NGINX and cert-manager behavior. 
+Despite everuything I wanted to try to explain and give ideas and some kind of roadmap in order to start to involve
+monitoring activities in this solution approach.
+
+A separate section in this documentation will be included, gathering all the future recommendations in order to improve the behavior of my architecture approach.
 
 ---
 
@@ -169,8 +229,8 @@ traffic from `aks-subnet`](https://github.com/bgarcial/sentia-assessment/blob/ma
 
 **Azure Kubernetes Service**
 
-Kubernetes as an orchestration container services is used to manage the Wordpress application and get
-the scalability and flexibility requirements
+Kubernetes as an orchestration container services is used to manage the Wordpress application and get the scalability and flexibility requirements.
+
 Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes where the the wordpress services are (pods)  
 
 ![alt text](https://cldup.com/MWwS6kBZWc.jpg "Kubernetes Behavior")
