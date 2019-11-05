@@ -300,7 +300,8 @@ If we use Azure CNI, a common issues are:
 >Also there is some scenarios where will require only CNI. Like setting up Ingress Controller Application Gateway where the backend pool will be the POD ID’s instead of the nodes. And only works if POD IP’s are visible from subnet level (CNI).
 
 **I have a Load Balancer and an Ingress controller, but the backend pools are the aks nodes not the POD IDs.**
-I will talk of this later.
+The Load Balancer topic belong to Kubernetes environment despite it is a network topic. 
+I will discuss it later.
 
 Is opportune to highlight despite I am using Azure CNI as a plugin Network, the Network policies process is not being implemented due to time reasons. Network policies will be considered as a future work to improve the solution. 
 
@@ -333,15 +334,54 @@ Kubernetes as an orchestration container services is used to manage the Wordpres
 
 Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes where the the wordpress services are (pods). 
 
+**First of all let's talk a bit about Kubernetes configuration used:**
+
+- **Node size**: The size of the virtual machines that will form the nodes in the cluster.
+  - I am using `Standard_D2_v2` for [agent pool profile](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L85) and [master profile](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L332)
+
+I consider to highlight here the master kubernetes and non master nodes (placed at agent pool profile)
+
+We got the [k8s control plane](https://kubernetes.io/docs/concepts/#kubernetes-control-plane) which govern how kubernetes communications is performed, maintaining a record of all k8s objects in the system and manage them via control loops in order to respond to changes in the cluster.
+This control plane contain the **kubernetes master process**, which refers to a collection of processes managing the cluster state to make global decisions about scheduling, starting pods, etc.
+
+**[Master components](https://kubernetes.io/docs/concepts/overview/components/#master-components)** can be run on any machine in the cluster and it has inside:
+- kube-apiserver, to expose the kubernetes api which is the frontend for the k8s control plane. That's why when we use `kubectl` we are communicating with the control plane.
+- etcd is a key value store that K8s use as a backing store for all cluster data.
+- kube-scheduler, is a kind of watching process looking for new pods created without node assigned in order to 
+  select a node for them
+- Kube-controller-manager, runs controllers (components that watch the state of the cluster and make or request changes when are needed.) 
+  - Node controller: Responsible for noticing and responding when nodes go down.
+  - Replication controller:  Responsible for maintaining the correct number of pods for every replication controller object in the system. 
+  - Endpoints Controller: Populates the Endpoints object (that is, joins Services & Pods).
+  - Service Account & Token Controllers: Create default accounts and API access tokens for new namespaces.
+- Cloud controller manager,  runs controllers that interact with the underlying cloud providers via some dependencies.
+
+**[Node components](https://kubernetes.io/docs/concepts/overview/components/#node-components)** are inside the agentpool profile, that's why run on every node maintaining running pods and providing the Kubernetes runtime environment. Are node components:
+
+- kubelet: An agent that runs on each node in the cluster. It makes sure that containers are running in a pod.
+- kube-proxy: s a network proxy that runs on each node in the cluster. It maintains network rules on nodes. These network rules allow network communication to your Pods from network sessions inside or outside of your cluster.
+
+Well, all those master and node components described above, **should be distributed across availability zones that I defined.**
+
+So, I decided:
+- **Use 2 Availability Zones** for master ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L334)) and **2 availability zones** for agentpool profile ([arm template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L350))
+In this approach solution, AKS HA was used across two availability zones, due to the customer had two servers (hosting application environment) and two MySQL servers to achieve HA in their existing approach.
+
+- 
+- 
+- 2 and 4 nodes to ensure define 4 zones per node. 
+https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md
+
+
 The following diagram try to detail the internal Kubernetes environment behavior when a Wordpress service is deployed into Kubernetes. 
 
 I would like to emphasize here only in the Load Balancer behavior and kubernetes things, and not so far at the Build and Release Pipeline workflow (at the right of the picture) which will be covered later.   
 
 ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
 
-First of all 
 
-I consider necessary to highlight here
+
+I consider necessary to highlight here the LB
 
 
 
