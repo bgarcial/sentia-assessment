@@ -199,6 +199,8 @@ This is the [ARM Template](https://github.com/bgarcial/sentia-assessment/blob/ma
 
 **A Virtual Network and two subnetworks** were defined with availability zones scope:
 
+I would like to detail here the Virtual Network configuration section and why I made those configuration decisions about it.
+
 - [AssessmentVnetTesting](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L273) 
   - [aks-subnet](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L279): Here, the Kubernetes cluster, aks nodes and pod ip address will be located.
     - Microsoft.SQL endpoint 
@@ -226,7 +228,7 @@ The Vnet and subnets have the following configuration:
   
   But ... **why the addresses already were assigned or taken by Kubernetes environment through it nodes?**
   
-  Well, let's talk in short terms about **Azure Kubernetes** networking modes behaviorI can experiment this networking mode behavior:
+  Well, let's talk a bit about **Azure Kubernetes** networking modes behavior:
   Azure Kubernetes in general has two kinds of networks types:
   - **Basic Networking**: 
     - AKS manage it's own virtual network and expose only public IPs
@@ -266,7 +268,9 @@ If we use Azure CNI, a common issues are:
 
 - **KUBENET**
   - I have limited ip address space
-    - Use NAT.
+    - Use NAT to route traffic between pods and nodes, because Nodes and pods are placed on different logical address space. 
+      - Nodes receive an ip address from azure virtual network and pods use CIDR - POD. So NAT is configured to the pods can reach resources on the Azure Virtual Network 
+        -  This additional routing may reduce network performance
     - I will not need a huge address space. 
       - **I have to say that this approach solution, does not require a huge address space.**
   - Most of the pod communication is within the cluster (**My pods needs to communicate with MySQL managed database service**).
@@ -311,21 +315,28 @@ Of this way, is warranted direct communication toward Azure MySQL and storage ac
 
 ![alt text](https://cldup.com/jxQHbvtg8i.jpg "NetworkServiceEndpoints")
 
-In addition, a virtual network rule in Azure database for MySQL instance was defined [in order to only accept
-traffic from `aks-subnet`](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L405) and [a rule to allow traffic from my home ip address](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L418).
+In addition, a virtual network rule in Azure database for MySQL instance was defined [in order to only accept traffic from `aks-subnet`](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L405) and [a rule to allow traffic from my home ip address](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L418).
 
 ![alt text](https://cldup.com/NA0pDsY_qA.jpg "VirtualNetworkRule")
 
 
-#### 3.1.3. Infrastructure Services:
+#### 3.1.3. Infrastructure Services
 
 **Azure Kubernetes Service**
 
 Kubernetes as an orchestration container services is used to manage the Wordpress application and get the scalability and flexibility requirements.
 
-Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes where the the wordpress services are (pods)  
+Kubernetes is being created and deployed [across two availability zones](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L333) allowing high availability configuration, which require the Azure standard load balancer inclusion in order to  traffic routing between zones and aks nodes where the the wordpress services are (pods). 
 
-![alt text](https://cldup.com/MWwS6kBZWc.jpg "Kubernetes Behavior")
+The following diagram try to detail the internal Kubernetes environment behavior when a Wordpress service is deployed into Kubernetes. 
+
+I would like to emphasize here only in the Load Balancer behavior and kubernetes things, and not so far at the Build and Release Pipeline workflow (at the right of the picture) which will be covered later.   
+
+![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
+
+First of all 
+
+I consider necessary to highlight here
 
 
 
