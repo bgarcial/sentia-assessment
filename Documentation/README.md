@@ -680,9 +680,49 @@ Such as I mentioned, is a the continious delivery process where the environment 
  
 ### 5.2.1 Infrastructure Deployment
 
-The ARM template is executed here. I am using a resource group deployment scope.
+This CD section is given by the ARM template execution.
+I am using a [resource group deployment scope](https://docs.microsoft.com/en-us/powershell/module/az.resources/new-azresourcegroupdeployment?view=azps-3.0.0).
 
-  ![alt text](https://cldup.com/Qv8OvIWj1y.png "Infrastructure Release Pipeline")
+ARM templates require we supply the name resource group where we want to deploy the resources, as a part of the 
+deployment command. 
+
+**IMPORTANT**
+If we want to execute the ARM template from Power shell the resource group must to exist before running the deployment.
+[Here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/README.md) some preparation Power shell execution of the ARM template used, before to execute it from the release pipeline.
+If you want to try the local Power shell approach, [you must to Install the Azure Power Shell environment](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-2.8.0) 
+
+Is not the objective of the CD process the local and manual execution of the ARM templates from Powershell
+
+- I am using n Azure Resource Group deployment task to deploy from Azure DevOPs the ARM template.
+  Let's have a look to the task.
+
+**Pre Requisites**
+
+The [ARM template to execute](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json) use a service principal to connect with Azure cloud and create the Kubernetes cluster. Actually, this service principal data adquisition process is not being automated from the ARM template, so will be necessary create a service principal of a manual way and reference in the ARM template their `servicePrincipalClientId` and `servicePrincipalClientSecret` data.
+
+- Creating the `SentiaAssessment` Service Principal using azure cli command
+
+```
+
+az ad sp create-for-rbac --role contributor -n "SentiaAssessment"
+Changing "SentiaAssessment" to a valid URI of "http://SentiaAssessment", which is the required format used for service principal names
+{
+  "appId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "displayName": "SentiaAssessment",
+  "name": "http://SentiaAssessment",
+  "password": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "tenant": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}
+ 
+```
+- 
+
+
+First of all, we give a name to the task and select a subscription to use to deploy the resources.
+
+- The **Azure Personal subscription** selected, is a service connection 
+ 
+  ![alt text](https://cldup.com/6_Ew8e4MRx.png "Infrastructure Release Pipeline")
 
 
   - Wordpress Deployment
