@@ -13,7 +13,7 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: wordpress-site-76
+          serviceName: wordpress-site-7
           servicePort: 80
         path: /
   tls: # < placing a host in the TLS config will indicate a cert should be created
