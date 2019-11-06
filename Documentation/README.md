@@ -700,10 +700,11 @@ Is not the objective of the CD process the local and manual execution of the ARM
 
 The [ARM template to execute](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json) use a service principal to connect with Azure cloud and create the Kubernetes cluster. Actually, this service principal data adquisition process is not being automated from the ARM template, so will be necessary create a service principal of a manual way and reference in the ARM template their `servicePrincipalClientId` and `servicePrincipalClientSecret` data.
 
+This service principal creation process should be automated from the ARM template.
+
 - Creating the `SentiaAssessment` Service Principal using azure cli command
 
 ```
-
 az ad sp create-for-rbac --role contributor -n "SentiaAssessment"
 Changing "SentiaAssessment" to a valid URI of "http://SentiaAssessment", which is the required format used for service principal names
 {
@@ -712,31 +713,139 @@ Changing "SentiaAssessment" to a valid URI of "http://SentiaAssessment", which i
   "name": "http://SentiaAssessment",
   "password": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "tenant": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-}
- 
+} 
 ```
-- 
+You have to keep in mind the `appId`, and `password`  data. Those data and `tenant` are sensitive data. 
+
+I created the `SentiaAssessment` service principal with the `create-for-rbac` and `--role contributor` flag.
+[`create-for-rbac`] create the SP with a default role assignment
+`--role contributor`is a contributor assignment.
+You can see [here more information](https://docs.microsoft.com/en-us/cli/azure/ad/sp?view=azure-cli-latest#az-ad-sp-create-for-rbac)
 
 
-First of all, we give a name to the task and select a subscription to use to deploy the resources.
+- Take the `appId`, and `password`  data previously mencioned and enter them in the release pipeline as a **pipeline 
+variables**.
+![alt text](https://cldup.com/RvtgB2KGXf.png "Infrastructure Release Pipeline")
 
-- The **Azure Personal subscription** selected, is a service connection 
- 
+- Give a name to the task and select a subscription to use to deploy the resources.
   ![alt text](https://cldup.com/6_Ew8e4MRx.png "Infrastructure Release Pipeline")
 
+  The **Azure Personal subscription** selected, is an Azure Resource Manager service connection created previously [of this way](https://docs.microsoft.com/en-us/azure/devops/pipelines/library/service-endpoints?view=azure-devops&tabs=yaml)
 
-  - Wordpress Deployment
-    The Wordpress aplication is deployed here.
-    In order to get up and running the Wordpress application, is necessary to deploy several beside services, referenced in the following activities/steps:
-    - Installing NGINX Ingress controller in its namespace
-    - Installing Cert Manager in its namespace.
-    - Login to Azure Container Registry
-    - Setup Helm3 on the Agent Machine.
-    - Creating Wordpress Database
-    - Creating User inside Wordpress database and grant permissions to it.
-    - Install Wordpress Helm chart in its namespace.
-    - Deploying ClusterIssuers to contact LetsEncrypt
-    - Creating Ingress to expose the service and get https protocol.
+![alt text](https://cldup.com/Oa3ZofKGs1.png "Infrastructure Release Pipeline")
+
+It was created using the service principal created previously, but with specific secrets to this service connection.
+You can try it out [checking this link](https://4bes.nl/2019/07/11/step-by-step-manually-create-an-azure-devops-service-connection-to-azure/)
+
+- In **Action** section is necessary to choose  *Create or update resource group* option
+  ![alt text](https://cldup.com/0bKdIY-rtF.png "Infrastructure Release Pipeline")
+  This *Create or update resource group* will create the resource group if it does not exist, otherwise it will update
+  the resources in.
+
+
+- Choose the **resource group name** and **location** where the resources will be deployed.
+ ![alt text](https://cldup.com/qismuYmXRu.png "Infrastructure Release Pipeline")
+  
+  I am passing the resourceGroup pipeline variable to get the resource name to create here
+  
+  ![alt text](https://cldup.com/1rp1HFfQf7.png "Infrastructure Release Pipeline")
+
+- In **Template Location** choose *Linked Artifact* and after that choose the ARM template PATH
+  ![alt text](https://cldup.com/VX1TpV2Th6.png "Infrastructure Release Pipeline")
+  The ARM template to execute is [this](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L356)
+  `sentia-assessment/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json`
+  
+  ![alt text](https://cldup.com/2K-05DcHYZ.png  "ARM Template to execute")
+
+- In **Overrride template parameters** you hould see empty `servicePrincipalClientId` and `servicePrincipalClientSecret` parameters.     
+  ![alt text](https://cldup.com/56FbpTnSXg.png  "ARM Template parameters")
+
+  Add the pipeline variables there of this way: `$(servicePrincipalClientId)` and `$(servicePrincipalClientSecret)`
+
+  ![alt text](https://cldup.com/EW8otyypTk.png  "ARM Template parameters")
+
+  Do the same with `$(administratorLogin)` and `$(administratorLoginPassword)` which will be a privilege user for
+  MySQL database. A privilege user database and password will be created from the template. 
+  
+  ![alt text](https://cldup.com/JmfOf8-vO7.png  "ARM Template parameters")
+  Of course you must create  `administratorLogin` and `administratorLoginPassword` as a pipeline variables previously
+  
+  ![alt text](https://cldup.com/EwWP5TKr83.png  "ARM Template parameters")
+
+  And at the end enter *Testing* as a value for environmentName ARM template parameter and click OK
+  
+  ![alt text](https://cldup.com/8hX8lQQaeh.png  "ARM Template parameters")
+
+Just for double check, the complete parameters flags or string placed finally here is this
+
+```
+-location "West Europe" -vnetName "AssessmentVNetTesting" -vnetAddressPrefix "10.0.0.0/8" 
+-subnet1Prefix "10.240.0.0/16" -subnet1Name "aks-subnet" -subnet2Prefix "10.241.0.0/27" 
+-subnet2Name "persistence-subnet" -k8s_cluster_name "WordpressSentiaAssessment" 
+-kubernetesVersion "1.14.7" -nodeCount 4 -agentVMSize "Standard_D2_v2" 
+-servicePrincipalClientId $(servicePrincipalClientId) 
+-servicePrincipalClientSecret $(servicePrincipalClientSecret) -serviceCidr "100.0.0.0/16" 
+-dnsServiceIP "100.0.0.10" -dockerBridgeCidr "172.17.0.1/16" 
+-serverName "WordpressSentiaAssessment" -administratorLogin $(administratorLogin) 
+-administratorLoginPassword $(administratorLoginPassword) -skuCapacity 2 -skuName "GP_Gen5_2" 
+-SkuSizeMB 5120 -SkuTier "GeneralPurpose" -skuFamily "Gen5" -mysqlVersion "5.7" 
+-storageAutoGrow "Disabled" -backupRetentionDays 7 -geoRedundantBackup "Disabled" 
+-virtualNetworkRuleName "AllowAksSubnet" -registryName "WordpressSentiaAssessment" 
+-registrySku "Standard" -adminUserEnabled true -environmentName Testing
+```
+
+
+- Choose *Complete* value in the **Deployment mode**
+  
+  ![alt text](https://cldup.com/HU0FH5VZcG.png  "ARM Template parameters")
+
+  The Complete mode, deletes the existing resources which weren't defined in the ARM template, so if the resource group already do exist and has resources not defined in the ARM template, those resources will be deleted.
+  This is a mechanism to keep the resources creating using the Infrastructure as Code approach.
+
+  ![alt text](https://cldup.com/5h9uNOMJfK.png  "ARM Template parameters") 
+  
+- In **Deployment Name** I am using the `$(Release.ReleaseId)` pre-built variable.
+  ![alt text](https://cldup.com/uIXOCxBRA0.png  "Deployment Name") 
+
+  This will allow me to reference the Deployments on the resource group on Azure portal by its ID
+  ![alt text](https://cldup.com/zW0ZVO7him.png  "Deployment Name")
+  
+  You can also use `$(Release.ReleaseName)` 
+  
+- Finally you should save the options selected and **Create** the release.
+  
+  You will see that the release pipeline start and the ARM template is executed
+
+  
+  ![alt text](https://cldup.com/r97BoTH-oF.png  "ARM Template Deployment")
+
+  After 9 minutes and 17 seconds all the resources definde in the ARM Template were deployed.
+
+  ![alt text](https://cldup.com/Dkizc-EzW4.png  "ARM Template Deployment")
+
+  So you can see in Azure portal the `sentia-assessment` resource group was created and the AKS HA cluster, MySQL, ACR and Vnets and subnets as well.
+  ![alt text](https://cldup.com/7E_7jeZwBU.png  "ARM Template Deployment")
+  
+  If you go to **Deployments** inside `sentia-assessment` resource group, you can see the Deployment ID. 
+  
+  ![alt text](https://cldup.com/-rcT_R7g_4.png  "ARM Template Deployment")
+
+
+### 5.2.2 Wordpress Deployment
+
+The Wordpress aplication is deployed here.
+
+In order to getting it up and running, is necessary to deploy several additional services, referenced in the following activities/steps:
+
+- Installing NGINX Ingress controller in its namespace
+- Installing Cert Manager in its namespace.
+- Login to Azure Container Registry
+- Setup Helm3 on the Agent Machine.
+- Creating Wordpress Database
+- Creating User inside Wordpress database and grant permissions to it.
+- Install Wordpress Helm chart in its namespace.
+- Deploying ClusterIssuers to contact LetsEncrypt
+- Creating Ingress to expose the service and get https protocol.
   
 All those activities are being deployed from the release pipeline with just pushing a button.
 
