@@ -392,9 +392,6 @@ In this approach solution, AKS HA was used across two availability zones, due to
   ![alt text](https://cldup.com/w9WcRNkWdh.png "AKS with Autoscale nodes")
    
 
-
-
-
 The following diagram try to detail the internal Kubernetes environment behavior when a Wordpress service is deployed into Kubernetes. 
 
 I would like to emphasize here only in the Load Balancer behavior and kubernetes things, and not so far at the Build and Release Pipeline workflow (at the right of the picture) which will be covered later.   
@@ -403,16 +400,79 @@ I would like to emphasize here only in the Load Balancer behavior and kubernetes
 
 
 
-I consider necessary to highlight here the LB
+**I consider necessary to highlight here the Azure Standard Load Balancer here.**
+
+When we deploy a high availability Azure Kubernetes cluster, it require to have a Load Balancer to manage traffic and distribute it across availability zones across the groups of backend pool servers, in order to provide scalability, which is the primary goal of load balancing.
+
+The idea on this approach solution is to have an optimal load distribution in order to reduce site inaccessibility caused by the failure of a single server or two of them (like the customer had deployed), assuring consistent performance for all users.
+
+A Wordpress aplications like mentioned in this case of study, must support concurrent connections from clients
+requesting text, images, video, or application data all in a fast and reliable manner, while scaling from hundreds of users to millions during peak times. Load balancers are a critical part of this scalability. 
+
+When the AKS cluster was deployed from ARM template, I got in Azure the following Standard Load Balancer.
+
+![alt text](https://cldup.com/7L5dQjhZi1.png "Azure LB")
+
+
+This Public IP address created is known as **Frontend IP configuration**
+![alt text](https://cldup.com/E4O0WEq5Kg.png "Azure LB")
+
+A public Load Balancer like this maps the frontend IP address and port number of incoming traffic to the private IP address and port number of the virtual machine (in this case of the VM scale sets defined previously), and vice versa for the response traffic from the virtual machines. In my case from Kubernetes cluster.
+
+Those virtual machines that we are talking here, are the nodes located in the nodepool created in my Kubernetes cluster. They are the backend pools, and those are the same nodes referenced [in the agentpool profile component in my ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L76)
+
+![alt text](https://cldup.com/8qex2CkIgM.png "Azure LB")
+
+By applying load-balancing rules, is possible distribute specific types of traffic across multiple VMs or services. 
+For example, is possible spread the load of web request traffic across multiple web servers.
+
+>Resources within the Assessment virtual network are not directly reachable from the outside unless that someone takes specific steps to expose them through public endpoints or connects them to on-premises networks through a virtual private network (VPN) or Azure Express Route. 
+
+**So, is here where the Ingress Controller process inside Kubernetes environment take place**
+
+We are using NGINX Ingress controller deployment inside Kubernetes to expose the WordPress sites to Internet. 
+When we create the Ingress controller process inside Kubernetes, the Ingress controller is deployed as a Load balancer service. Let's see.
+
+From the release pipeline in Azure DevOps, this command is executed:
+
+`helm3 install nginx-ingress stable/nginx-ingress --namespace nginx`
+
+![alt text](https://cldup.com/velmfOr3lR.png "Creating NGINX Ingress controller deployment")
+
+
+When this happens, NGINX is installed as an Load Balancer service
+
+
+![alt text](https://cldup.com/iGfxZAYX-Z.png "Creating NGINX Ingress controller deployment")
+
+The External IP that I got here, is attached to the Load Balancer created when the AKS high availability cluster was created. If I go to the Load Balancer options in Azure Portal, I can see it has now 2 public IP addresses
+
+![alt text](https://cldup.com/8z6QpT6k8u.png "Azure Load Balancer with 2 frontend IPs")
+
+Inside the red rectangle I can see the same external IP address NGINX Ingress Controller IP address.
+The orange rectangle is the public IP address created when the AKS HA cluster was deployed.
+
+![alt text](https://cldup.com/cACcIPIlAW.png "Azure Load Balancer with 2 frontend IPs")
+
+This Public IP address has two rules allowint the 80 and 443 ports to http and https.
+
+![alt text](https://cldup.com/knwcsvUjXA.png "Azure Load Balancer rules")
+
+These rules given by NGINX public IP address now are part of the general AKS HA Load Balancing rules
+
+![alt text](https://cldup.com/tfbD8Wmbk8.png "Azure Load Balancer rules")
+
+And if we detail each rule, we can see the mapping between the frontend IP adresss and port number with the backend port and backend pool 
+
+![alt text](https://cldup.com/R-pggL--qa.png "Azure Load Balancer mapping frontend - backend pools")
+
+For the 80 port is the same situation
+![alt text](https://cldup.com/I7D1apu-Fc.png "Azure Load Balancer mapping frontend - backend pools")
+
+These are the backend pools that I've mentioned at the beggining of the Load Balancer section above.
 
 
 
-TALK ABOUT DETAILED K8S DIAGRAM
-
-
-We will use our own Ingress controller deployment inside Kubernetes to expose the WordPress sites to Internet. 
-When we create the Ingress process inside Kubernetes, the Ingress controller is in able to manage to become to be a Load Balancer
-It'll act as an external Load Balancer, that's why the Kubernetes cluster does not include an LB, at least at the moment.
 
 #### 3.1.4.Platform as a Service Components:
 Azure Database for MySQL server instance
