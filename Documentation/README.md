@@ -490,7 +490,7 @@ These are the backend pools that I've mentioned at the beggining of the Load Bal
 
 ---
 
-#### 3.2. Highest Level Architecture Deployment
+### 3.2. Highest Level Architecture Deployment
 
 According to all previously mentioned this is the general communication workflow between the
 components that are involved in the solution approach purposed. 
@@ -498,17 +498,189 @@ The CI/CD process is not mentioned in detail here, it will be explained later in
 
 ![alt text](https://cldup.com/zT9vCqN6Py.jpg "Kubernetes High Level Behavior")
 
-
- 
 ---
 
-## CICD 
+## 4. Procedures to maintain the system
+
+Is necessary to keep in mind the different components involved in the architecture deployment which were
+mentioned in the **3.1 How the system is organized** section
+
+Having understood how the the Vnet, Subnets and their network service endpoints were deployed and how they are working with the AKS cluster and MySQL instance I can reference the following important facts at the moment to
+make modifications to the deployment:
+
+### 4.1 Network Connectivity configuration 
+The Kubernetes cluster was deployed using Azure Container Network Interface plugin having the following address space:
+
+- `AssessmentVnet` has an address space of 10.0.0.0/8. If you want to modify/re-design the network address space 
+  is necessary modify it [here in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L21)
+- `aks-subnet` has an address space of 10.240.0.0/16. If you want to modify/re-design the network address space, is necessary modify it [here in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L28)
+- `persistence-subnet` has an address space of 10.241.0.0/27. If you want to modify/re-design the network address space, is necessary modify it [here in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L42)
+  I decided to use `/27` as a netmask (`255.255.255.224 = 27`) in order to save optimize the address space in the persistence-subnet. `/27` as a netmask allow me to reserve until 32 private IP addressses. Here I only have deployed the MySQL server  
+  
+  ![alt text](https://cldup.com/vhZM4NaWVp.png "Persistence-subnet address range")
+  27 adressses are available if we want to add more services in this subnet. 
+
+**IMPORTANT**
+
+- If you want to modify the subnetting schema for the Vnet and the subnets, please keep in mind the Networking facts and considerations referenced above **in the 3.1.2 section**: 
+  - **A Virtual Network and two subnetworks** 
+  - **Basic Networking** and **Advanced Networking** 
+  - **IMPORTANT - PROS AND CONS CNI**
+  - **How can I decide to use Azure CNI or Kubenet network profiles?**
+  - And also read about [the virtual network service endpoints explanation](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#about-virtual-network-services-endpoints) at the subnets level
+
+If you want to change the Network profile mode from Advanced (CNI) to Basic (Kubenet), is possible to do it 
+and keep the services up and running. Just make sure that some route tables between subnets were created and the network endpoints also persist.
+
+If you decide to change to the basic netwok profile, please keep in mind that the Network policies recommended to apply in the [Managing deployments on kubernetes section](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#managing-deployments-on-kubernetes), they will cannot be applied in the basic network profile.
+
+### 4.2. Azure Kubernetes HA configuration.
+
+You can modify the HA schema in the cluster. If you want to do it, you should go to the options in the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L322). Please check from the line 322 until 355 code section.
+
+Please if you want to know about AKS HA configurations details read the **Azure Kubernetes Service** section located [here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#313-infrastructure-services)
+Going through these configuration details will allow you to be familiarized with important deployment features like:
+- Availability zones (for master and agent pool profiles)
+- Azure Standard Load Balancer (mandatory for HA schemas. Please refer to **"I consider necessary to highlight here the Azure Standard Load Balancer here."** section)
+- Virtual machine Size and number of nodes and its distribution across zones.
+
+These previous points are very important detail to keep in mind at the moment of deploy or modify an AKS HA service
+
+### 4.3. Azure Database for MySQL HA configuration.
+
+You can modify the HA schema for MySQL managed service. If you want to do it, you should go to the options in the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L374). Please check from the line 374 until 437 code section.
+The MySQL configurations parameters are explained in the **[2.1. MySQL database Wordpress sites](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#21-mysql-database-wordpress-sites)**
+You can explore the links information provided there in order to understand the changes to do.
+
+#### 4.3.1.  Adding Azure Virtual Network Rules
+
+In the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L248) some firewall rules were added in order to allow incoming traffic to MySQL (3306 port)
+Currently, my home IP address is being allowed in order to connect to MySQL server from any database client like Workbench or MySQL cli.
+
+If you want to allow additional locations to connecto to MySQL, you should add a rule here.
+
+Also, [other Virtual Network rule name was defined](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L405) in order to allow communication from `aks-subnet` network to MySQL
+
+If you add a new subnet, you should add it into a virtual rule name here.
+
+### 4.4. Azure Container Registry.
+
+An ACR repository was created in order to store the customize Wordpress images to be deployed.
+The following information is useful to create a new repositories inside ACR and also if you want to modify the 
+`Dockerfile`
+This repository was created of the following way:
+
+- You should go to the `sentia-assesment/WordpressSite` path. You will find there the `Dockerfile`.
+
+- Building the image.
+
+```
+~/projects/sentia-assesment/WordpressSite · (master±)
+⟩ docker build -t customize_wordpress:5.2.4 .
+```
+It creates the `customize_wordpress:5.2.4` image
+
+- Creating tag: We need to create a tag in order to upload  our image to our ACR
+We have to include in the tag our ACR host server, in my case `wordpresssentiaassessment.azurecr.io.azurecr.io` 
+[Here](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli) for more information.
+ 
+```
+⟩ docker tag customize_wordpress:5.2.4 wordpresssentiaassessment.azurecr.io.azurecr.io/customize_wordpress:5.2.4
+```
+
+- Push the image: Please, we have to be sure of use our complete tag created in the immediately previous step, I mean `wordpresssentiaassessment.azurecr.io.azurecr.io.azurecr.io/customize_wordpress:5.2.4`
+
+```
+⟩ docker push wordpresssentiaassessment.azurecr.io/customize_wordpress:5.2.4
+The push refers to repository [registryname.azurecr.io/customize_wordpress]
+b63469233da6: Pushed 
+b032b61b15b2: Pushed 
+b67d19e65ef6: Pushed 
+5.2.4: digest: sha256:dc62844f946a49f2e724fa38bad6e2cab73a4561b22b690876ab5534febd3569 size: 5128
+```
+This process will create the `customize_wordpress:5.2.4` image. 
+
+![alt text](https://cldup.com/hGH6HnMsQT.png "ACR Wordpress repository")
+
+Is from this repository that the Wordpress helm chart are going to pull the `customize_wordpress:5.2.4` image inside Kubernetes environment.
+
+This process is an essential part of the Continous Integration steps and it will be automated in the Build pipeline.
+
+### 4.5. Modifying the Wordpress Helm chart.
+
+In the `Deployments/Kubernetes/HelmCharts/wordpress-mine` path there are the Wordpress helm chart structure directory. 
+Please, keep in mind the following code sections in order to point to the Wordpress image:
+
+- `Deployments/Kubernetes/HelmCharts/wordpress-mine/values.yaml` file: General values to be deployed. You should modify the following parameters:
+  - `repository`: The URL repository and image tag to pull the image. [Check it here](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/Kubernetes/HelmCharts/wordpress-mine/values.yaml#L9)
+  - `tag`: The tag defined when the Wordpress image was created. Check it here](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/Kubernetes/HelmCharts/wordpress-mine/values.yaml#L10)
+
+**IMPORTANT**
+
+Please keep in mind that this is a basic Wordpress Helm chart created locally using the `helm create ...` command.
+I encourage to myself to use the official [Wordpress Helm chart](https://github.com/helm/charts/tree/master/stable/wordpress), clone it and customize it, in order to take in advance of all the Wordpress configuration parameters.
+(You can also add all those parameters to the local Helm chart created, but is better use the official Helm chart configuration)
+
+I was [starting to customize this official Helm chart](https://github.com/bgarcial/sentia-assessment/tree/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/Kubernetes/HelmCharts/wordpress), but due to time reasons I had to continue using the [local basic Helm chart created](https://github.com/bgarcial/sentia-assessment/tree/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/Kubernetes/HelmCharts/wordpress-mine).
+
+
+
+---
+
+## 5. PART 2 - CICD 
+
+This is the CI/CD approach purposed
 
 ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior and CI/CD")
 
 
-## Issues and Risk Mitigation
 
+
+**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/AzqVHuvSjZ.jpg)**
+
+Currently, I have a Build and Release Pipeline automated from Azure DevOps.
+
+The Build pipeline contains the activities that impact on the general artifact
+The Release pipeline contains the activities that impact on the environment (accp, testing, development, production)
+
+So, in the Build Pipeline are the folowing steps:
+
+
+![alt text](https://cldup.com/pVRIWOS3GU.png "Kubernetes Behavior and CI/CD")
+
+- The Release Pipeline is divided within two categories: 
+  - Infrastructure Deployment
+    The ARM template is executed here. I am using a resource group deployment scope.
+
+  ![alt text](https://cldup.com/Qv8OvIWj1y.png "Infrastructure Release Pipeline")
+
+
+  - Wordpress Deployment
+    The Wordpress aplication is deployed here.
+    In order to get up and running the Wordpress application, is necessary to deploy several beside services, referenced in the following activities/steps:
+    - Installing NGINX Ingress controller in its namespace
+    - Installing Cert Manager in its namespace.
+    - Login to Azure Container Registry
+    - Setup Helm3 on the Agent Machine.
+    - Creating Wordpress Database
+    - Creating User inside Wordpress database and grant permissions to it.
+    - Install Wordpress Helm chart in its namespace.
+    - Deploying ClusterIssuers to contact LetsEncrypt
+    - Creating Ingress to expose the service and get https protocol.
+  
+All those activities are being deployed from the release pipeline with just pushing a button.
+
+![alt text](https://cldup.com/lzujgCN9wI.png "Wordpress Environments Release Pipeline")
+
+![alt text](https://cldup.com/JbMA-tU_PO.png "Wordpress Environments Release Pipeline")
+
+Maybe  can detail each of the steps.
+
+---
+
+## 6. Issues and Risk Mitigation
+
+I have to organize this section
 
 Please document all the technical issues you have encountered so far in the final documentation.
  
@@ -647,3 +819,9 @@ Let's check the permissions over ACR ...
 Set in MySQL that Allow access from Azure Services.
 
 ---
+
+## 7. ABOUT High Availability Approaches and how to test it.
+
+HA means different things to different people. I prefer to approach it with math,
+    defining it numerically and based on facts.
+A good inspirational reading about System Availability and Reliability you can find here: https://www.eventhelix.com/RealtimeMantra/FaultHandling/system_reliability_availability.htm.
