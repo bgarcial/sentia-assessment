@@ -488,16 +488,23 @@ These are the backend pools that I've mentioned at the beggining of the Load Bal
 - Azure Database for MySQL server instance
 - Azure Container Registry to store Wordpress Docker images
 
-
-
-Architecture Complete Landscape High level
-
-![alt text](https://cldup.com/KfhPsd0zYk.jpg "Kubernetes Behavior")
-
-
- ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
 ---
 
+#### 3.2. Highest Level Architecture Deployment
+
+According to all previously mentioned this is the general communication workflow between the
+components that are involved in the solution approach purposed. 
+The CI/CD process is not mentioned in detail here, it will be explained later in a specific point.
+
+![alt text](https://cldup.com/zT9vCqN6Py.jpg "Kubernetes High Level Behavior")
+
+
+ 
+---
+
+## CICD 
+
+![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior and CI/CD")
 
 
 ## Issues and Risk Mitigation
