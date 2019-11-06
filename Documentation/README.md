@@ -394,11 +394,13 @@ In this approach solution, AKS HA was used across two availability zones, due to
 
 The following diagram try to detail the internal Kubernetes environment behavior when a Wordpress service is deployed into Kubernetes. 
 
-I would like to emphasize here only in the Load Balancer behavior and kubernetes things, and not so far at the Build and Release Pipeline workflow (at the right of the picture) which will be covered later.   
+I would like to emphasize here only in the Load Balancer behavior and kubernetes things. 
 
-![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
 
-**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/AzqVHuvSjZ.jpg)**
+![alt text](https://cldup.com/ahhoyNGKEN.png "Kubernetes Behavior")
+
+
+**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/ahhoyNGKEN.png)**
 
 
 **I consider necessary to highlight here the Azure Standard Load Balancer here.**
@@ -482,15 +484,9 @@ These are the backend pools that I've mentioned at the beggining of the Load Bal
 
 
 #### 3.1.4.Platform as a Service Components:
-Azure Database for MySQL server instance
-Rule name to allow access from my home IP address.
-It could be necessary add later the Sentia HQ IP address. Just in case.
 
-Azure Container Registry to store Wordpress Docker images
-Like I mentioned yesterday the ResourceGroup and the ServicePrincipal (and its secrets used) are being created manually previously to the execution of the deployment.
-This is something to include inside the template.
- 
-The deployment of these infrastructure resources are being executed from Powershell at Az-ResourceGroup level
+- Azure Database for MySQL server instance
+- Azure Container Registry to store Wordpress Docker images
 
 
 
@@ -499,7 +495,7 @@ Architecture Complete Landscape High level
 ![alt text](https://cldup.com/KfhPsd0zYk.jpg "Kubernetes Behavior")
 
 
- 
+ ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
 ---
 
 
@@ -638,5 +634,9 @@ so indeed, I will need to look at the permissions of the service principal
 So I am using the [SentiaAssessment](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/b496b133-0dbc-4a2b-8e6f-622def202432/isMSAApp/) SP to my AKS clueste
 Let's check the permissions over ACR ...
 
+
+## PROBLEM 3 ..
+
+Set in MySQL that Allow access from Azure Services.
 
 ---
