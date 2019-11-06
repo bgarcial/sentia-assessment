@@ -60,7 +60,7 @@ So I decided the following considerations for the architecture.
 ### 2.1. MySQL database Wordpress sites.
 
 - **Azure Database for MySQL was used.**
-The wordpress service will be deployed as [stateless application](https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps), it means *"do not store data or application state to the cluster or to persistent storage"*. That's why is used MySQL as platform as service. 
+The wordpress service was deployed as [stateless application](https://cloud.google.com/kubernetes-engine/docs/how-to/stateless-apps), it means *"do not store data or application state to the cluster or to persistent storage"*. That's why is used MySQL as platform as service. 
 Of this way, the wordpress sites will be easily scalable.
 
 In addition, use MySQL as an external service have the following benefits: 
@@ -81,7 +81,7 @@ I've choose the following specifications:
 - [General Purpose](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L165) sku pricing tier was considered as starting point. There is the possibility to migrate to the **Memory optimized** pricing tier, just in case that memory performance, and transaction processing activities require more compute power.
 - Compute Gen 5 [as an sku family](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L174)
 - I decided to use local redundant backup and [not geo redundant backup](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L201) due to geo redundant backup store the backups not only within the region in which the MySQL server is deployed, azure also replicate the backup to a paired datacenter in a different region. 
-  - At the moment I considered local redundant backup with only West Europe region scope as a good starting point with relation to MySQL high availability deployment. If we wanto to enable a geo-redundant backup is only [change the default value to Enabled in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L203) 
+  - At the moment I considered local redundant backup with only West Europe region scope as a good starting point with relation to MySQL high availability deployment. If we want to to enable a geo-redundant backup is only [change the default value to Enabled in the ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L203) 
 - The `storageAutoGrow` [also was disabled](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L192) due to in he General Purpose pricing tier I have available a range [between 5GB and 4TB of storage size](https://docs.microsoft.com/en-us/azure/mysql/concepts-pricing-tiers#storage) 
 - The `"sslEnforcement": "Disabled"` also was selected in order to allow connections to MySQL server without need certificates. The inbound connections to MySQL are secure, because of network service endpoints.
 You can see later the **About Virtual Network services endpoints** section to understand how works the services endpoints over subnets in a security context
@@ -93,7 +93,8 @@ Always will be a good idea [to stay monitoring MySQL](https://docs.microsoft.com
 
 The Wordpress instances sites will be hosted and manage them by **Azure Kubernetes Service** to:
 
-#### 2.2.1 **AKS cluster with Availability zones** (*Preview feature, excluded from the service level agreements*)
+#### 2.2.1 **AKS cluster with Availability zones** 
+[Currently available for West Europe](https://azure.microsoft.com/en-us/global-infrastructure/services/?products=kubernetes-service). In AKS service, the availability of the agent nodes in the cluster is covered by the [Virtual Machines service level Agreement](https://azure.microsoft.com/en-us/support/legal/sla/virtual-machines/v1_8/)
 
 This will allow [distribute the AKS nodes in multiple zones](https://docs.microsoft.com/en-us/azure/aks/availability-zones) in order to have failure tolerance in one of those zones.
 An Azure Standard Load Balancer is enabled for managing and traffic distribution across zones.
@@ -115,10 +116,6 @@ Several scalability benefits in AKS clusters.
   - Adding [nodepools](https://docs.microsoft.com/en-us/azure/aks/use-multiple-node-pools) (nodes in the same configuration) in irder to use more nodes. 
 
 ##### Managing Deployments on Kubernetes
-
-
-
-
 
 Use of Kubernetes environments require to beard in mind some security concerns like internamespace and intercontainer communications inside the cluster. 
 I am mentioning here how to mitigate that security concerns, but due to time reasons, these thre weren't implemented
@@ -487,7 +484,7 @@ These are the backend pools that I've mentioned at the beggining of the Load Bal
 
 - Azure Database for MySQL server instance
 - Azure Container Registry to store Wordpress Docker images
-
+  I decided not enable [geo replication for container images](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-multi-region#enable-geo-replication-for-container-images) due to the current customer performance concerns are not related with speed to store and pull the container images. 
 ---
 
 ### 3.2. Highest Level Architecture Deployment
@@ -497,6 +494,8 @@ components that are involved in the solution approach purposed.
 The CI/CD process is not mentioned in detail here, it will be explained later in a specific point.
 
 ![alt text](https://cldup.com/zT9vCqN6Py.jpg "Kubernetes High Level Behavior")
+
+**You can see this architecture picture in a bigger size [here](https://cldup.com/zT9vCqN6Py.jpg)**
 
 ---
 
@@ -624,7 +623,6 @@ I encourage to myself to use the official [Wordpress Helm chart](https://github.
 I was [starting to customize this official Helm chart](https://github.com/bgarcial/sentia-assessment/tree/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/Kubernetes/HelmCharts/wordpress), but due to time reasons I had to continue using the [local basic Helm chart created](https://github.com/bgarcial/sentia-assessment/tree/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/Kubernetes/HelmCharts/wordpress-mine).
 
 
-
 ---
 
 ## 5. PART 2 - CICD 
@@ -633,24 +631,56 @@ This is the CI/CD approach purposed
 
 ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior and CI/CD")
 
+**You cans see this K8s CI/CD behavior as a bigger picture [here](https://cldup.com/AzqVHuvSjZ.jpg)**
 
-
-
-**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/AzqVHuvSjZ.jpg)**
 
 Currently, I have a Build and Release Pipeline automated from Azure DevOps.
 
 The Build pipeline contains the activities that impact on the general artifact
 The Release pipeline contains the activities that impact on the environment (accp, testing, development, production)
 
-So, in the Build Pipeline are the folowing steps:
+I decided the following:
+
+## 5.1 Continous Integration process
+
+Here will be only activities related to the Wordpress application sites upgrade process, via Docker and finally
+I expose the Wordpress Helm chart as an artifact created.
+
+In the CI process I am getting the source code from [github repository](https://github.com/bgarcial/sentia-assessment/)
+code project.
+
+![alt text](https://cldup.com/qV0zlvXKsm.png "Kubernetes Behavior and CI/CD")
+
+In the CI approach will be all the activities related with the creation and uploading  Wordpress Docker image to ACR
+[These activities](https://github.com/bgarcial/sentia-assessment/blob/master/Documentation/README.md#44-azure-container-registry), in order to automatize the continuous integration every time the client updates any of their WordPress applications in GIT. 
+
+So the CI build pipeline has enabled the continuous integration trigger:
+
+![alt text](https://cldup.com/CkTlNzeAtl.png "CI Trigger in the build pipeline")
+
+**IMPORTANT NOTE:**
+The CI/CD workflow in this purpose is strongly related with Helm tool, which allow us to deploy applications inside 
+Kubernetes.
+
+I decide to use Helm3 due to [some security concerns](https://engineering.bitnami.com/articles/helm-security.html) about helm 2 version. 
+
+Currently [Helm 3 is in Release Candidate 2 version](https://github.com/helm/helm/releases/tag/v3.0.0-rc.2)
+At the moment of come across in this assignment the latest helm 3 available version was [Helm v3-beta5](https://github.com/helm/helm/releases/tag/v3.0.0-beta.5) released 15 days ago. 
+This CI/CD approach will work with this version, despite there is a more recently.
+
+Azure DevOps, the CI/CD platform used, does not have compatible tasks with Helm3, only with Helm 2.
+
+According to this, I decided to install helm3 inside the Azure DevOps build agents via bash script files and use helm3 via bash tasks.
+From bash tasks (in azure devops) we can navigate through the [Wordpress Helm chart structure directory defined](https://github.com/bgarcial/sentia-assessment/tree/master/Deployments/Kubernetes/HelmCharts/wordpress-mine) in the release pipeline. 
 
 
-![alt text](https://cldup.com/pVRIWOS3GU.png "Kubernetes Behavior and CI/CD")
+## 5.2 Continous Delivery process
 
-- The Release Pipeline is divided within two categories: 
-  - Infrastructure Deployment
-    The ARM template is executed here. I am using a resource group deployment scope.
+Such as I mentioned, is a the continious delivery process where the environment related activities must be executed, that's why I decided to divided in two categories the release pipeline process
+ 
+### 5.2.1 Infrastructure Deployment
+
+The ARM template is executed here. I am using a resource group deployment scope.
 
   ![alt text](https://cldup.com/Qv8OvIWj1y.png "Infrastructure Release Pipeline")
 
