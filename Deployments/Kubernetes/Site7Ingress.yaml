@@ -18,5 +18,5 @@ spec:
         path: /
   tls: # < placing a host in the TLS config will indicate a cert should be created
   - hosts:
-    - site6.bgarcial.me
+    - site7.bgarcial.me
     secretName: letsencrypt-staging-site-7
