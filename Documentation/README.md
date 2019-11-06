@@ -398,7 +398,7 @@ I would like to emphasize here only in the Load Balancer behavior and kubernetes
 
 ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
 
-**You can see this kubernete behavior picture in a bigger size [here](https://cldup.com/AzqVHuvSjZ.jpg)**
+**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/AzqVHuvSjZ.jpg)**
 
 
 **I consider necessary to highlight here the Azure Standard Load Balancer here.**
@@ -413,6 +413,8 @@ requesting text, images, video, or application data all in a fast and reliable m
 When the AKS cluster was deployed from ARM template, I got in Azure the following Standard Load Balancer.
 
 ![alt text](https://cldup.com/7L5dQjhZi1.png "Azure LB")
+**You can see this LB configuration picture in a bigger size [here](https://cldup.com/7L5dQjhZi1.png)**
+
 
 
 This Public IP address created is known as **Frontend IP configuration**
@@ -422,7 +424,10 @@ A public Load Balancer like this maps the frontend IP address and port number of
 
 Those virtual machines that we are talking here, are the nodes located in the nodepool created in my Kubernetes cluster. They are the backend pools, and those are the same nodes referenced [in the agentpool profile component in my ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L76)
 
-![alt text](https://cldup.com/8qex2CkIgM.png "Azure LB")
+![alt text](https://cldup.com/8qex2CkIgM.png "Azure LB NODEPOOLS")
+
+**You can see this LB nodepools picture in a bigger size [here](https://cldup.com/8qex2CkIgM.png)**
+
 
 By applying load-balancing rules, is possible distribute specific types of traffic across multiple VMs or services. 
 For example, is possible spread the load of web request traffic across multiple web servers.
@@ -450,6 +455,8 @@ The External IP that I got here, is attached to the Load Balancer created when t
 
 ![alt text](https://cldup.com/8z6QpT6k8u.png "Azure Load Balancer with 2 frontend IPs")
 
+**You can see this Azure Load Balancer with 2 frontend IPs picture in a bigger size [here](https://cldup.com/8z6QpT6k8u.png)**
+
 Inside the red rectangle I can see the same external IP address NGINX Ingress Controller IP address.
 The orange rectangle is the public IP address created when the AKS HA cluster was deployed.
 
@@ -462,6 +469,7 @@ This Public IP address has two rules allowint the 80 and 443 ports to http and h
 These rules given by NGINX public IP address now are part of the general AKS HA Load Balancing rules
 
 ![alt text](https://cldup.com/tfbD8Wmbk8.png "Azure Load Balancer rules")
+**You can see this Azure Load Balancer rules picture in a bigger size [here](https://cldup.com/tfbD8Wmbk8.png)**
 
 And if we detail each rule, we can see the mapping between the frontend IP adresss and port number with the backend port and backend pool 
 
@@ -471,8 +479,6 @@ For the 80 port is the same situation
 ![alt text](https://cldup.com/I7D1apu-Fc.png "Azure Load Balancer mapping frontend - backend pools")
 
 These are the backend pools that I've mentioned at the beggining of the Load Balancer section above.
-
-
 
 
 #### 3.1.4.Platform as a Service Components:
