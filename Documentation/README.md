@@ -674,6 +674,10 @@ All those activities are being deployed from the release pipeline with just push
 
 ![alt text](https://cldup.com/JbMA-tU_PO.png "Wordpress Environments Release Pipeline")
 
+
+
+**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/JbMA-tU_PO.png)**
+
 Maybe  can detail each of the steps.
 
 ---
