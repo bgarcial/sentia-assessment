@@ -398,6 +398,7 @@ I would like to emphasize here only in the Load Balancer behavior and kubernetes
 
 ![alt text](https://cldup.com/AzqVHuvSjZ.jpg "Kubernetes Behavior")
 
+**You can see this kubernete behavior picture in a bigger size [here](https://cldup.com/AzqVHuvSjZ.jpg)**
 
 
 **I consider necessary to highlight here the Azure Standard Load Balancer here.**
