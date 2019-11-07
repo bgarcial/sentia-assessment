@@ -658,7 +658,7 @@ So the CI build pipeline has enabled the continuous integration trigger:
 
 ![alt text](https://cldup.com/CkTlNzeAtl.png "CI Trigger in the build pipeline")
 
-### IMPORTANT NOTE:
+### 5.1.2 IMPORTANT NOTE:
 
 The CI/CD workflow in this purpose is strongly related with Helm tool, which allow us to deploy applications inside 
 Kubernetes.
