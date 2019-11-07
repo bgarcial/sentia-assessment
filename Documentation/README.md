@@ -1649,4 +1649,13 @@ we guarantee you will have Virtual Machine Connectivity to at least one instance
 
 This condition also apply for me, so If one availability zone goes down, I would have one virtual machine running at least in the remaining zone. The nine terms here 1 nine, close to 2 nines.  **99.95%**
 
->For any Single Instance Virtual Machine using premium storage for all Operating System Disks and Data Disks, we guarantee you will have Virtual Machine Connectivity of at least 99.9%.
+>For any Single Instance Virtual Machine using premium storage for all Operating System Disks and Data Disks, 
+we guarantee you will have Virtual Machine Connectivity of at least 99.9%.
+
+I don't understand very well this condition, due to my default pool nodes on Kubernetes use this storage configuration 
+type:
+
+![alt text](https://cldup.com/xlZzUze5aL.png "K8s storage type")
+
+
+
