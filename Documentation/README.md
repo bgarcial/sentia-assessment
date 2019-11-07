@@ -1613,4 +1613,40 @@ In my case of the Virtual Machines Scale sets which support the nodes in the AKS
 
 ![alt text](https://cldup.com/X5o_UmdpJJ.png "K8s node-2")
 
-Ok, this is not new, due to 
+Ok, this is not new, due to [in the node count configuration I defined that](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#node-count-is-the-number-of-nodes-in-the-node-pool-defined-to-k8s)
+
+Even we can verify this node distribution listing the agent nodes in the cluster, filtering on the `failure-domain.beta.kubernetes.io/zone` ':
+
+![alt text](https://cldup.com/eZu3BuU7AL.png "Verifying nodes distribution")
+
+As we add additional nodes to an agent pool, the Azure platform automatically distributes the underlying VMs across the specified availability zones.
+
+#### 7.1.2.SLA for Virtual Machine Scale Sets
+
+Microsoft [says](https://azure.microsoft.com/en-us/support/legal/sla/virtual-machine-scale-sets/v1_1/):
+
+>Virtual Machine Scale Sets is a free service, therefore, it does not have a financially backed SLA itself. 
+However, if the Virtual Machine Scale Sets includes Virtual Machines in at least 2 Fault Domains, 
+the availability of the underlying Virtual Machines SLA for two or more instances applies. 
+If the scale set contains a single Virtual Machine, the availability for a Single Instance Virtual Machine applies.
+See the Virtual Machines SLA for more details.
+
+Ok I have two Virtual Machine Scale sets in each availability zone, so the availability for them is applied.
+
+- Then, they refer to me to the **[SLA for Virtual Machines](https://azure.microsoft.com/en-us/support/legal/sla/virtual-machines/v1_8/)**, it cover the Virtual Machine Scale sets.
+
+Let's keep in mind some facts about it.
+
+>For all Virtual Machines that have two or more instances deployed across two or more Availability Zones 
+in the same Azure region, we guarantee you will have Virtual Machine Connectivity to 
+at least one instance at least 99.99% of the time.
+
+This condition apply for me, so, at least I would have one virtual machine running in any of my two availability zones defined, in case of failure.
+The nine terms here in this case are two nines, i.e. **99.99%**
+
+>For all Virtual Machines that have two or more instances deployed in the same Availability Set, 
+we guarantee you will have Virtual Machine Connectivity to at least one instance at least 99.95% of the time.
+
+This condition also apply for me, so If one availability zone goes down, I would have one virtual machine running at least in the remaining zone. The nine terms here 1 nine, close to 2 nines.  **99.95%**
+
+>For any Single Instance Virtual Machine using premium storage for all Operating System Disks and Data Disks, we guarantee you will have Virtual Machine Connectivity of at least 99.9%.
