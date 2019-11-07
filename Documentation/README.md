@@ -697,7 +697,7 @@ Is not the objective of the CD process the local and manual execution of the ARM
 - I am using n Azure Resource Group deployment task to deploy from Azure DevOPs the ARM template.
   Let's have a look to the task.
 
-#### Pre Requisites
+#### Pre Requisites for ARM template execution
 
 The [ARM template to execute](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json) use a service principal to connect with Azure cloud and create the Kubernetes cluster. Actually, this service principal data adquisition process is not being automated from the ARM template, so will be necessary create a service principal of a manual way and reference in the ARM template their `servicePrincipalClientId` and `servicePrincipalClientSecret` data.
 
@@ -869,7 +869,7 @@ The following variables were defined:
 - `azure_tenant`, is the directory ID of my Azure Active Directory. From it I can manage access to multiple subscriptions. This `azure_tenant` is necessary to get it to login from `az login` using a service principal. 
 - `database_host`, is the MySQL database hostname given from the ARM template [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L376)
 - `database_name`, is the database which will be created in this release pipeline and it will store the Wordpress site tables.
-- `database_password`, this is the password used to access to MySQL database server. It was given from the ARM template parameter [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L387) and its value was assigned
+- `database_password`, this is the password used to access to MySQL database server. It was given from the ARM template parameter [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L387) and its value was assigned Overrride template parameters
 - database_user
 - image_tag
 - new_db_passwd_user_to_be_created
