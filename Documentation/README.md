@@ -1479,16 +1479,99 @@ the `az aks update` command executed above, has created the `acrPull` role assig
 ![alt text](https://cldup.com/j6pHyRreZm.png "acrPull role")
 
 
-# ADDITIONAL NOTES:
+### ADDITIONAL NOTES:
 
-Trying to solve the 
+Trying to solve [the style sheets and assets files over https issue](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#61--wordpress-sites-are-not-able-to-serve-stylesheets-and-other-assets-files), I was
+getting into in the Wordpress helm chart parameters, and I realize that in my own Wordpress helm chart was creating 
+ a service account in Kubernetes [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress-mine/values.yaml#L21) 
+ 
+So, when I realize abut it [I put it to false](https://github.com/bgarcial/sentia-assessment/commit/41e58b7c2c4a7e73617e55cf4673cf9c45ab4eb0), because the the official Wordpress helm chart (I just clone it from Github's helm charts ) [they don't do that](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml)
+
+That service account creation detail leads me to think that maybe it was interfering with the pull of my image. 
+
+I cannot to be entirely sure of this, but I deployed a new infrastructure from scratch and I executed my own Helm chart and the wordpress image was pulled of a successfully way, without I had to setup the association between the als cluster and ACR documented here in this issue.
+
+### SOME HINT TO TRY IN THE FUTURE 
+
+These comments here could be related with the first and most critical issue [presented here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#61--wordpress-sites-are-not-able-to-serve-stylesheets-and-other-assets-files)
+
+I want to highlight that actually in the github repository I have two Wordpress Helm charts you can see them [here](https://github.com/bgarcial/sentia-assessment/tree/master/Deployments/Kubernetes/HelmCharts)
+
+
+
+![alt text](https://cldup.com/lli67aA-y8.png "Wordpress Helm charts")
+
+- `wordpress`: My own Wordpress helm chart. Is with this chart I have been working to write this documentation process
+- `wordpress-mine`: The official Wordpress Helm chart, it was cloned from the [official github site](https://github.com/helm/charts/tree/master/stable/wordpress)
+
+
+So I decided to clone the official Wordpress helm chart and customize it, and not create a new one via `helm create` command, which it was that I had.
+This decision is reflected [in this commit](https://github.com/bgarcial/sentia-assessment/commit/be69f770ca57f9375efdfd5807972d4f27cc8fc2) and currently that I am thinking, if I move to use the official Wordpress helm chart, maybe its can help me to customize better the Wordpress deployment and maybe I couldn't have problems like the pull error image and the https problem about my static files.
+
+I say this, because in my own Helm chart `wordpress-mine` (which is actually running for this assessment), I don't have there many parameters that the official `wordpress` helm chart has, and also the structure of my own created helm chart is different to the official helm chart
 
 --
 
 
-## PROBLEM 3 ..
+### 6.3 Client with IP address '13.79.132.109' (Azure DevOps agent) is not allowed to connect to this MySQL server. 
 
-Set in MySQL that Allow access from Azure Services.
+- **Name**: Azure DevOps agent machine does not have access to MySQL managed service.
+- **Id**: 0003
+- **Description**: 
+During the [Wordpress release pipeline](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#wordpress-deployment-release-pipeline-tasks) when the MySQL database tasks were executed, I got this message the first time
+
+![alt text](https://cldup.com/gZbDiCGC-b.png "Azure DevOps agent machine does not have access to MySQL managed service")
+
+- **Criticallity**: Low 
+
+#### 6.3.1 Mitigations. 
+
+- **Current Status**: Closed.
+- **Mitigation status description**:
+
+The Azure DevOps agent machine does not have access to MySQL managed service, so it was necessary to figure out its IP
+address and white-listing it in the security settings in MySQL server and also from the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L248).
+
+But something particular happens when I try to figure out the Azure DevOps agent machine IP address
+
+Each release executed by me, in each release, the Azure DevOps agent machine IP address was different, that's why I had to figure out what's going on with it.
+
+Microsoft says [here](https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops#agent-ip-ranges):
+
+>In some setups, you may need to know the range of IP addresses where agents are deployed. 
+For instance, if you need to grant the hosted agents access through a firewall, you may wish to restrict that access by IP address. 
+Because Azure DevOps uses the Azure global network, IP ranges vary over time. We publish a weekly JSON file listing IP ranges for Azure datacenters, broken out by region. 
+This file is published every Wednesday (US Pacific time) with new planned IP ranges. The new IP ranges become effective the following Monday. 
+We recommend that you check back frequently to ensure you keep an up-to-date list. If agent jobs begin to fail, a key first troubleshooting step 
+is to make sure your configuration matches the latest list of IP addresses.
+
+The [weekly JSON file](https://www.microsoft.com/en-us/download/details.aspx?id=56519) listing IP ranges link looks like it does not exist because it redirects to a Microsoft download center website
+
+In this [post question-answers](https://developercommunity.visualstudio.com/idea/467755/static-ip-address-for-azure-devops.html) I manage to detail the correct link to download the weekly JSON file IP addresses range for Azure DevOps.
+
+It says:
+>avatar image
+Luis Ayala [MSFT]
+May 15 at 10:39 PM
+Hey check link below, is about IP ranges.
+https://docs.microsoft.com/en-us/azure/devops/pipelines/agents/hosted?view=azure-devops#agent-ip-ranges
+Regions
+https://azure.microsoft.com/en-us/global-infrastructure/geographies/
+>#### IS THIS 
+>IP Ranges Document.
+https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653
+You only need to add that subnets to your white list depending of your geography.
+Regards.
+
+So the correct link that point to the list of IP addresses ranges is [this](https://www.microsoft.com/en-us/download/confirmation.aspx?id=41653)
+
+But I did prefere Allow access to MySQL server from Azure Services via Azure portal of this way:
+
+https://cldup.com/3MKFO23xdO.png
+
+![alt text](https://cldup.com/3MKFO23xdO.png "Allow access to MySQL server from Azure Services")
+
+I did prefer this, because according to the documentation refered those IP addresses ranges are changing every week, so it was better to work with my release pipeline workflow.
 
 ---
 
