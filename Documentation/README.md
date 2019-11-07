@@ -1324,6 +1324,8 @@ Also maybe keep in mind the apache mod ssl actions ...
 
 Also [this article](https://www.nginx.com/blog/9-tips-for-improving-wordpress-performance-with-nginx/) about how to improve performance to Wordpress applications with nginx looks interesting
 
+And here [other ideas](https://wordpress.org/support/topic/nginx-browser-rewrite-rules-cause-404-errors-in-static-files/) from nginx perspective as well.
+
 
 Note: At the moment of I realize of this alternative actions that I describe to solve the problem, I had to 
 stop to solve this issue in order to advance in this documentation process.
@@ -1777,6 +1779,45 @@ I am not sure how address this question under mathematical perspective, that I w
 I say this because if I there were only 1 availability zone, the Load Balancer will redirect all the traffic to nly one zone, which will affect the performance, and it will create some kind of bottlenecks in the system.
 
 I have to say as a conclusion, that this kind of "analysis" that I did thinking about availability as series and parallel schema is very poor. I have to get into a few more in details, read more and also learn about mathematical perspective.
+
+### 7.4. Some purposes to test availability
+
+- I was thinking under operational perspective, send many requests to the https://site8.bgarcial.me/ domain
+A good starting point could be send an specific number of `curl` requests inside a bash file
+[Here](https://stackoverflow.com/a/3110542/2773461) some people give some ideas about it.
+
+
+- Other good and maybe more elaborated approach is the use of [Apache Jmeter](https://jmeter.apache.org/) to load test functional behavior and measure performance in the Kubernetes cluster.
+
+Those are just ideas about how can I test the performance and availability.
+Due to time reasons, these ideas are not being addressed here.
+
+
+### 7.5. Caching media and assets files to Amazon S3
+
+One good idea could be store all the files that we usually store in the Wordpress media library (images, videos, audio, pdf documents), store them in some cloud storage service like Amazon S3. Even the assets like CSS and Javascript files.
+
+This could be give us the following benefits:
+
+- Reduce the requests to the server (AKS nodes)
+Kubernetes cluster wordpress applications  no longer has to deliver media files, so I can reduce the load times.
+
+- Easy migration: The media files are not being associated with the Wordpress sites, so is easier to move the WordPress sites without care about content. Basically we just moving the PHP files, which takes up almost no space.
+
+- Connect the S3 bucket to some CDN solution in order to distribute the files in locations around the globe.
+If I have some Wordpress S3 plugin, it automatically copies or move the files in the media content gallery to Amazon s3
+and then the S3 could transfer the files to the CDN.
+The Wordpress sites could serve the files on S3 or use the CDN connected to S3 bucket to delivering content of an optimal way.
+
+There are plenty of Amazon S3 plugins for Wordpress [like this](https://wordpress.org/plugins/amazon-s3-and-cloudfront)
+
+A tentative approach using Amazon S3 buckets and some content delivery network solution.
+
+![alt text](https://cldup.com/9Cd2Q2x3rh.jpg "Allow access to MySQL server from Azure Services")
+
+---
+
+## 8. Improve opportunities in the entire solution
 
 
 
