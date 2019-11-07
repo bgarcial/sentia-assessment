@@ -858,7 +858,7 @@ The following pipeline Variables are created
 
 ![alt text](https://cldup.com/rotaWbiPFB.png  "ARM Template Deployment")
 
-- ### Creating DevelopmentRelease Variable groups
+- #### Creating DevelopmentRelease Variable groups
 
 Variable groups are very useful when we want to group information that is closely related with some subject
 In this case, like in the release activities goes everything that impact to a specific environment, I am creating
@@ -869,59 +869,351 @@ The following variables were defined:
 - `azure_tenant`, is the directory ID of my Azure Active Directory. From it I can manage access to multiple subscriptions. This `azure_tenant` is necessary to get it to login from `az login` using a service principal. 
 - `database_host`, is the MySQL database hostname given from the ARM template [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L376)
 - `database_name`, is the database which will be created in this release pipeline and it will store the Wordpress site tables.
-- `database_password`, this is the password used to access to MySQL database server. It was given from the ARM template parameter [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L387) and its value was assigned Overrride template parameters
-- database_user
-- image_tag
-- new_db_passwd_user_to_be_created
-- new_db_user_to_be_created
-- service_principal_sentia_assessment_app_id
-- service_principal_sentia_assessment_password
-- wordpressEmail
-- wordpressPassword
-- wordpressUsername
+- `database_user` and `database_password`, this is the password used to access to MySQL database server. It was given from the ARM template parameter [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L387) and its value was assigned during the [Infrastructure release pipeline execution](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#pre-requisites-for-arm-template-execution) in the **Overrride template parameters** section.
+Find out `administratorLogin`(administrator username) and `administratorLoginPassword`(administrator password) pipeline variables.
+Those admin credentials are used to connect with MySQL host database from MySQL release pipeline tasks and create the wordpress database, its user and assign it permissions. 
 
-- Creating `wordpress-site-*`,`nginx` and `cert-manager` namespaces
+- image_tag, is the tag given to the Wordpress image uploaded to the ACR in [Azure Container Registry activities](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#44-azure-container-registry)
 
-All of them are executed via Kubernetes task (interacting with kubectl command tool)
+- `new_db_user_to_be_created` and `new_db_passwd_user_to_be_created` are the new user and password created during this release pipeline execution. This credentials are used to connect with Wordpress database (`database_name` parameter above) when the Wordpress is installed. 
+- 
+- `service_principal_sentia_assessment_app_id` and `service_principal_sentia_assessment_password` are the service principal credentials, which were created in the [Pre Requisites for ARM template execution](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#pre-requisites-for-arm-template-execution).
+Find out the **Creating the SentiaAssessment Service Principal** section  
+- `wordpressUsername`, `wordpressPassword` and `wordpressEmail` are the data to access to the Wordpress instance installed.
 
-https://cldup.com/bxU720YcLn.png
+#### Wordpress Deployment Release pipeline tasks
+
+The steps addressed here will be explained:
+
+- **Creating `wordpress-site-*`,`nginx` and `cert-manager` namespaces**
+
+All of them are executed via Kubernetes task (interacting with `kubectl` command tool)
 
 
-- Login to ACR
-- Getting Ready Environment
-  - Downloading and installing helm version 3 on azure devops agent machine
-  - Login to azure services from `az login` command line tool 
-  - Getting AKS cluster credentials `az aks get-credentials`
-  - [Initializing and update helm chart repository](https://v3.helm.sh/docs/intro/quickstart/#initialize-a-helm-chart-repository)
-- Creating Wordpress database
-- Creating User inside Wordpress database and grant it permissions  
+![alt text](https://cldup.com/bxU720YcLn.png "Kubernetes namespace")
+
+You have to be sure to choose the following options highlighted in red rectangles: 
+**create** option as a command
+`namespace cert-manager` as an arguments
+In **Advanced** section the `kubectl` tool is downloaded. Choose 1.14.7, which is the current kubernetes version given to the cluster from the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L63)
+In **Working Directory** enter  `$(System.DefaultWorkingDirectory)` prebuilt variable
+In **Output format** choose YAML option. 
+
+![alt text](https://cldup.com/E-6uP2Hj6k.png "Kubernetes namespace")
+
+- **Login to ACR**
+Is the access to the Azure Container Registry created from the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L440)
+
+![alt text](https://cldup.com/AQRx-0sW6b.png "Login to ACR")
+
+It's a docker task using the `docker login` command and connecting to my ACR via **Azure Container Registry**
+service connection that I created previously of this way:
+
+![alt text](https://cldup.com/tBbtzPob_3.png "Login to ACR")
+
+
+- Getting Ready Environment to execute Deployments
+This is a bash script task file and I am doing the following here:
+```
+
+# Stop on error. Bash process will stop and highlight some error.
+set -e
+
+# ownloading and installing latest beta helm3 version on azure devops agent machine. 
+wget https://get.helm.sh/helm-v3.0.0-beta.5-linux-amd64.tar.gz
+pwd
+# Unpacking latest beta helm3 version
+tar -xzf helm-v3.0.0-beta.5-linux-amd64.tar.gz
+./linux-amd64/helm version
+
+# Login to azure from az cli tool using SentiaAssessment Service principal
+az login --service-principal -u $(service_principal_sentia_assessment_app_id) -p $(service_principal_sentia_assessment_password) --tenant $(azure_tenant)
+
+# Getting K8s azure cluster credentials
+az aks get-credentials --resource-group $(resourceGroupDev) --name $(kubernetesCluster)
+
+# Creating a symbolic link to use helm3 command in anywhere on agent machine
+echo "Show ls command"
+ls  /home/vsts/work/r1/a/linux-amd64/helm
+#helm create release
+cd /usr/bin
+echo "Creating a symbolic link to make helm3 wide system scope"
+sudo ln -s /home/vsts/work/r1/a/linux-amd64/helm helm3 
+echo "Symbolic link created"
+pwd
+cd
+echo "Now in root path directory"
+helm3 version
+# Initializing and update helm chart repository - https://v3.helm.sh/docs/intro/quickstart/#initialize-a-helm-chart-repository
+helm3 repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm3 repo update
+```
+- **Execute Azure MySQL : SqlTaskFile  - Creating Wordpress Database**
+The database for the Wordpress site is created here
+
+![alt text](https://cldup.com/9-BtBqIUhN.png "Creating Wordpress database")
+
+Here we are using most of the variable created in the DevelopmentRelease variable group
+
+![alt text](https://cldup.com/nIKuvgNiee.png "Variable group") 
+
+- **Creating User inside Wordpress database and grant it permissions**
+
+Here a wordpress site user database is created and I assigned permissions to the database
+created in the previous step
+
+![alt text](https://cldup.com/LtqpR5lhwM.png "Variable group")
+
 - Deploying Wordpress Helm chart in `wordpress-site-*` namespace
-- Installing NGINX Ingress controller helm chart in `nginx` namespace
-- Cert-Manager Deployment
-  - Installing Cert-manager custom resources definitions
-  - Installing Cert Manager helm chart in `cert-manager` namespace.
-  - Installing Staging and Production ACME Cluster Issuers to contact to Let'sEncrypt ACME CA
-- Creating Ingress resource to expose the Wordpress service and get https protocol to it.
+
+Here my own Wordpress Helm chart is deployed via the following bash script:
+
+```
+# Testing helm3 command
+echo 'Hello Helm'
+helm3 version
+
+# Knwing current path
+echo 'Current directory:'
+pwd
+
+echo 'Content Current directory:'
+echo $(System.ArtifactsDirectory)
+
+# Entering to the Project root directory
+echo "Entering to project"
+cd ./GithubSentiaAssesment/
+pwd
+ls
+
+# Deploying Wordpress Helm chart
+helm3 install wordpress-site-8 ./Deployments/Kubernetes/HelmCharts/wordpress-mine \
+      --set image.repository=$(acr_repository) \
+      --set image.tag=$(image_tag) \
+      --set image.pullPolicy=Always \
+      --set wordpressUsername=$(wordpressUsername) \
+      --set wordpressPassword=$(wordpressPassword) \
+      --set wordpressEmail=$(wordpressEmail) \
+      --set mariadb.enabled=false \
+      --set externalDatabase.host=$(database_host) \
+      --set externalDatabase.user=$(new_db_user_to_be_created) \
+      --set externalDatabase.password=$(new_db_passwd_user_to_be_created) \
+      --set externalDatabase.database=$(database_name) \
+      --set externalDatabase.port=3306 \
+      --set wordpressScheme=https \
+      --set replicaCount=1 \
+      --namespace site-8 
+
+echo 'Wordpress Helm chart installed'
+
+```
+
+![alt text](https://cldup.com/JbMA-tU_PO.png "Wordpress Environments Release Pipeline")
+
+**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/JbMA-tU_PO.png)**
+
+- **Installing NGINX Ingress controller helm chart in `nginx` namespace**
+
+Here, nginx ingress controller helm chart is deployed via this bash script.
+`helm3 install nginx-ingress stable/nginx-ingress --namespace nginx`
+
+![alt text](https://cldup.com/qgNlGGEug3.png "NGINX from helm chart")
+
+
+- **Cert-Manager Deployment**
   
+  - **Installing Cert-manager custom resources definitions**
+    cert-manager uses some custom resources in order to work with certificates, clusterissuers and orders inside kubernetes environment. 
+    Basically this command is executed in this kubernetes task
+    ```
+    # Install the CustomResourceDefinition resources separately
+    kubectl apply --validate=false -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.11/deploy/manifests/00-crds.yaml
+    ```
+
+    ![alt text](https://cldup.com/2ihu_FzdGC.png "Executing Cert Managers CRDs")
+
+  - **Installing Cert Manager helm chart in `cert-manager` namespace.**
+    Here, cert-manager helm chart is deployed via this bash script.
+
+    ```
+    echo 'Deploying Cert Manager'
+    # Adding cert-manager repository and updating helm3 index
+    helm3 repo add jetstack https://charts.jetstack.io
+    helm3 repo update
+
+    # Installing cert-manager helm chart
+    helm3 install cert-manager --namespace cert-manager --version v0.11.0 jetstack/cert-manager
+
+    echo 'Cert Manager Controller installed'
+    ```
+
+    ![alt text](https://cldup.com/nbfDKwtYfb.png "NGINX from helm chart")
+
+  - **Installing Staging and Production ACME Cluster Issuers to contact to Let'sEncrypt ACME CA**
+    Cert-Manager setup contact with certificate authorities in order to get the TLS certificates to the
+    https protocol. I choose to contact to Let'sEncrypt, which has Staging and Production servers to create
+    certificates. 
+    Cert-Manager contact to Let'sEncrypt via `ClusterIssues` resources, so here those are created.
+    The YAML manifest to `StagingClusterIssuer` is:
+```
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # You must replace this email address with your own.
+    # Let's Encrypt will use this to contact you about expiring
+    # certificates, and issues related to your account.
+    email: botibagl@gmail.com
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Secret resource used to store the account's private key.
+      name: letsencrypt-staging
+    # Add a single challenge solver, HTTP01 using nginx
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+```
+The YAML manifest to `ProductionClusterIssuer` is:
+```
+apiVersion: cert-manager.io/v1alpha2
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # You must replace this email address with your own.
+    # Let's Encrypt will use this to contact you about expiring
+    # certificates, and issues related to your account.
+    email: botibagl@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Secret resource used to store the account's private key.
+      name: letsencrypt-prod
+    # Add a single challenge solver, HTTP01 using nginx
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+```
+Those YAML files are being executed in these tasks here
+
+  ![alt text](https://cldup.com/xzo3RmVU_9.png "NGINX from helm chart")
+
+- Creating Ingress resource to expose the Wordpress service and get https protocol to it.
+
+And now, is necessary to create an Ingress resource to expose the Wordpress helm chart service deployed previously to Internet.
+
+The `Site8Ingress.yaml` file was create here:
+
+```
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    # Contacting directly to Let'sEncrypt production environment
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Contacting to Nginx Ingress controller
+    kubernetes.io/ingress.class: nginx 
+  name: wordpress-site-8-ingress
+  namespace: site-8
+spec:
+  rules:
+  - host: site8.bgarcial.me
+    http:
+      paths:
+      - backend:
+          serviceName: wordpress-site-8
+          servicePort: 80
+        path: /
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - site8.bgarcial.me
+    secretName: letsencrypt-prod-site-8
+```
+
+This ingress resource is being executed here:
+
+![alt text](https://cldup.com/e00yN8k3Fe.png "Exposing Ingress for site8.bgarcial.me")
+
+
 All those activities are being deployed from the release pipeline with just pushing a button.
 
 ![alt text](https://cldup.com/lzujgCN9wI.png "Wordpress Environments Release Pipeline")
 
-![alt text](https://cldup.com/JbMA-tU_PO.png "Wordpress Environments Release Pipeline")
+
+- So, when this Release pipeline is executed, we can see the following:
+
+![alt text](https://cldup.com/zGwSE-0k_8.png "Wordpress Environments Release Pipeline")
+
+And all the resources were deployed in the Kubernetes cluster
 
 
+NGINX Ingress Controller
+![alt text](https://cldup.com/7QuJsnpEvI.png "Ingress Controller")
 
-**You can see this kubernetes behavior picture in a bigger size [here](https://cldup.com/JbMA-tU_PO.png)**
+Cert-Manager Namespace
+![alt text](https://cldup.com/6ZQJlPMQGl.png "Cert-Manager Namespace")
 
-Maybe  can detail each of the steps.
+Cert-Manager CRDs and clusterissuers 
+![alt text](https://cldup.com/vtP4cfYQ_q.png "Cert-Manager CRDs and clusterissuers")
+
+And here an interesting part, the Wordpress helm chart deployed in order to get the
+[site8.bgarcial.me](https://site8.bgarcial.me/) site up and running
+
+![alt text](https://cldup.com/alUcKGLcKX.png "Cert-Manager CRDs and clusterissuers")
+
+I only have 1 pod, this is because in the Wordpress helm chart [by default the replicas is one](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress-mine/values.yaml#L5) 
+
+You can modify there the number of `replicaCount` or you can also add the `--set replicaCount=1` parameter in the `helm install` command.
+
+### What about the Wordpress site?
+
+Ok, I am going to adress somethings here.
+
+- If we go to [site8.bgarcial.me](https://site8.bgarcial.me/), yes we got https for the domain.
+  
+![alt text](https://cldup.com/TYtJ17Gize.png "HTTPS protocol")
+
+But currently I have a problem with consume the static files in my Wordpress deployment. [In the Issues and Risk Mitigation section I will refer to this](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#6-issues-and-risk-mitigation)
+
+So Lets continue with the wordpress installation
+
+
+![alt text](https://cldup.com/1drqYBne4E.png "Wordpress installation")
+
+Giving the database name given in the variable groups `database_name` which was created in the release pipeline
+Giving the database password given in the variable groups `new_db_passwd_user_to_be_created` 
+Giving the database HOST given in the variable groups `database_host`  
+
+![alt text](https://cldup.com/YCeknXDTyy.png "Wordpress installation")
+
+![alt text](https://cldup.com/0ZPufaviYM.png "Wordpress installation")
+
+Click in Run installation and I will need to provide some site information.
+
+`Username` is the `wordpressUsername` variable given in the variable groups
+`Password` is the `wordpressPassword
+` variable given in the variable groups
+![alt text](https://cldup.com/k3Nx7OHv_6.png "Wordpress installation")
+
+And the `wordpressEmail` (which is missing here)
+
+When we press Install Wordpress button
+
+
+![alt text](https://cldup.com/3gZKHIrrtQ.png "Wordpress installation")
+
+![alt text](https://cldup.com/orTHBQq_Tz.png "Wordpress installation")
+
 
 ---
 
 ## 6. Issues and Risk Mitigation
 
-I have to organize this section
-
-Please document all the technical issues you have encountered so far in the final documentation.
+Here the technical issues encountered in this soluton approach are documented.
  
 Let's agree on the section name and subsections:
 * Name: Risks mitigation;
@@ -932,7 +1224,7 @@ Let's agree on the section name and subsections:
        Closed>|Mitigation status description.
 
 
-# PROBLEM 1
+### 6.1 
 
 I cannot see the static files from my wordpress deployment,
 Wordpress installation does not work well behind some load balancers
