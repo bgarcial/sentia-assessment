@@ -1219,13 +1219,60 @@ in order to be include in the  `sentia-assessment/Deployments/Kubernetes/HelmCha
 - And the data [to contact to the external database](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml#L148) 
 
 
-
 ---
 
 ## 6. Issues and Risk Mitigation
 
 Here the technical issues encountered in this soluton approach are documented.
  
+### 6.1  Wordpress sites are not able to serve stylesheets and other assets files.
+
+- **Name**: Deployed Wordpress sites are not able to serve static files
+- **Id**: 0001
+- **Description**: 
+
+I cannot see the stylesheets and other assets files from [site8.bgarcial.me](https://site8.bgarcial.me/).
+
+When I use Inspect element in the browser I got a kind of mixed content problem:
+
+
+![alt text](https://cldup.com/J6264-J20F.png "Wordpress installation")
+
+Let's see the errors here:
+
+```
+(index):13 Mixed Content: The page at 'https://site8.bgarcial.me/' was loaded over HTTPS, 
+but requested an insecure script 'http://site8.bgarcial.me/wp-includes/js/wp-emoji-release.min.js?ver=5.2.4'. 
+This request has been blocked; the content must be served over HTTPS.
+f @ (index):13
+```
+![alt text](https://cldup.com/pHiQcwQae7.png "Wordpress installation")
+
+According to this log console looks like the Wordpress normally get the style sheets and assets files via http and not by https.
+
+But If I take the scripts URL that Wordpress site has requesting in the image above (all URLs squared in blue color ), 
+I can achieve them, under https protocol, the `.js` and `.css` files.
+
+https://site8.bgarcial.me/wp-includes/js/wp-emoji-release.min.js?ver=5.2.4
+https://site8.bgarcial.me/wp-includes/css/dist/block-library/style.min.css?ver=5.2.4
+https://site8.bgarcial.me/wp-includes/css/dist/block-library/theme.min.css?ver=5.2.4
+https://site8.bgarcial.me/wp-content/themes/twentynineteen/style.css?ver=1.4
+https://site8.bgarcial.me/wp-content/themes/twentynineteen/print.css?ver=1.4
+https://site8.bgarcial.me/wp-includes/css/dist/block-library/style.min.css?ver=5.2.4
+https://site8.bgarcial.me/wp-includes/css/dist/block-library/theme.min.css?ver=5.2.4
+https://site8.bgarcial.me/wp-includes/js/wp-embed.min.js?ver=5.2.4
+
+
+Maybe it could be because when I install my own Wordpress Helm chart, I included the `--set wordpressScheme=https`
+and also from my Wordpress helm chart I have this `https` value [by default](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress-mine/values.yaml#L16)
+
+But, also in our architecture we have Apache web server inside the docker wordpress image running in the
+helm chart, and we have Nginx as an ingress controller.
+
+Some analysis here is that nginx send the request using https, but looks like Apache are not able to understand https.
+
+- **Criticallity**: It's a very critical issue.
+
 Let's agree on the section name and subsections:
 * Name: Risks mitigation;
    * Table of risks:
@@ -1234,33 +1281,83 @@ Let's agree on the section name and subsections:
        Header: Id|Status<Open, 
        Closed>|Mitigation status description.
 
+#### 6.1.1 Possible mitigations. 
 
-### 6.1 
-
-I cannot see the static files from my wordpress deployment,
-Wordpress installation does not work well behind some load balancers
-
-https://snippets.webaware.com.au/snippets/wordpress-is_ssl-doesnt-work-behind-some-load-balancers/
-
-There is this plugin to install on the Wordpress instance deployed, but by itself does not worl
-https://wordpress.org/plugins/ssl-insecure-content-fixer/
+- **Current Status**: Open.
 
 
-Looks like we would need to create a redirect rule in apache to allow https content
-https://aws.amazon.com/es/premiumsupport/knowledge-center/redirect-http-https-elb/
-https://cwiki.apache.org/confluence/display/HTTPD/RedirectSSL
+- **Mitigation status description**:
 
+Ok let's go back to:
+Some analysis here is that nginx send the request using https, but looks like Apache are not able to understand https.   
+I tried to enable a `RewriteEngine` rule  in Apache web server when I build the `Dockerfile` image [here](https://github.com/bgarcial/sentia-assessment/blob/master/WordpressSite/Dockerfile#L14)
 
-Also the Wordpress helm chart has the `wordpressSchema=https` parameter, which force to any
-client to use https protocol when we type the address with `http`
-https://github.com/helm/charts/tree/master/stable/wordpress#parameters
+As you can see, in the `Dockerfile` I am overriding the `/etc/apache2/apache2.conf` file adding the `RewriteEngine` [here](https://github.com/bgarcial/sentia-assessment/blob/master/WordpressSite/etc/apache2/apache2.conf#L181)
+
+I taken this approach solution [from this link](https://aws.amazon.com/es/premiumsupport/knowledge-center/redirect-http-https-elb/)
+
+But it does not work
+There are other answers with different configurations on Apache [here](https://stackoverflow.com/questions/16200501/http-to-https-apache-redirection/16200545#16200545) which I tried several of them withot success.
+
+But then, now I put my eye on the Load balancer that I have in the architecture.
+And I found this article: [WordPress is_ssl() doesn’t work behind some load balancers](https://snippets.webaware.com.au/snippets/wordpress-is_ssl-doesnt-work-behind-some-load-balancers/)
+They purpose a plugin to be installed via Wordpress admin, [this plugin](https://wordpress.org/plugins/ssl-insecure-content-fixer/).
+
+I've installed the plugin, but the issue still persist. (I did it on site4.bgarcial.me domain in that time.)
+
+![alt text](https://cldup.com/6VFBCsQ2DW.png "Wordpress installation")
+
+Some forums say that it is a common problem when we have wordpress installation behind some load balancers, and I am in this side, and I think that I have to continue working in the `RewriteEngine` rule 
+
+Maybe not in the `/etc/apache2/apache2.conf` but yes in `/etc/apache2/sites-available/000-default.conf`
+Also maybe keep in mind the apache mod ssl actions ..
+
+Note: At the moment of I realize of this alternative actions that I describe to solve the problem, I had to 
+stop to solve this issue in order to advance in this documentation process.
 
 ---
 
-# PROBLEM 2  --- ErrImagePull
+### 6.2  ErrImagePull when the Kubernetes pod try to consume the Wordpress customize docker image created
 
-When we install wordpress private image from helm chart and we got ErrImagePull
-is because we need to associate the AKS with the ACR of this way
+- **Name**: Kubernetes pod is not able to consume the Wordpress customize docker image created 
+- **Id**: 0002
+- **Description**: 
+If you got an `ErrImagePull` message when you deploy the Wordpress Helm chart
+
+
+![alt text](https://cldup.com/q8LZgGoo9G.png "Wordpress installation")
+
+
+And if you describe the pod which is not able to pull the image, and if you got this message:
+
+```
+Error response from daemon: pull access denied for customize_wordpress, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+  Warning  Failed     2m20s (x4 over 3m39s)  kubelet, aks-defaultpool-34253081-vmss000001  Error: ErrImagePull
+```
+
+```
+Normal   Pulling    2m21s (x4 over 3m40s)  kubelet, aks-defaultpool-34253081-vmss000001  Pulling image "customize_wordpress:5.2.4"
+  Warning  Failed     2m20s (x4 over 3m39s)  kubelet, aks-defaultpool-34253081-vmss000001  Failed to pull image "customize_wordpress:5.2.4": rpc error: code = Unknown desc = Error response from daemon: pull access denied for customize_wordpress, repository does not exist or may require 'docker login': denied: requested access to the resource is denied
+  Warning  Failed     2m20s (x4 over 3m39s)  kubelet, aks-defaultpool-34253081-vmss000001  Error: ErrImagePull
+  Normal   BackOff    114s (x6 over 3m38s)   kubelet, aks-defaultpool-34253081-vmss000001  Back-off pulling image "customize_wordpress:5.2.4"
+  Warning  Failed     103s (x7 over 3m38s)   kubelet, aks-defaultpool-34253081-vmss000001  Error: ImagePullBackOff
+```
+- **Criticallity**: It's a very critical issue, but it was a casual issue. I will explain why.
+  
+
+#### 6.2.1 Mitigation action. 
+
+- **Current Status**: Closed.
+
+- **Mitigation status description**:
+It's happens because by default when the Azure Container Registry was deployed from the ARM template, the service principal used to create the AKS service does not had permissions to pull images over that Azure Container Registry.
+
+I didn't realize that I had to associate the aks cluster with the Azure container registry.
+
+Microsoft documentation say it how to do it [here](https://docs.microsoft.com/en-us/azure/aks/cluster-container-registry-integration#configure-acr-integration-for-existing-aks-clusters)  
+
+And then before to deploy my own Wordpress helm chart application, in my case from `helm install` command (referenced before in the Wordpress Deployment release pipeline section), is necesary to integrate my existing ACR with my existing AKS cluster 
+
 
 ```
 ⟩ az aks update -n WordpressSentiaAssessment-aks -g sentia-assessment --attach-acr WordpressSentiaAssessment
@@ -1326,7 +1423,10 @@ is because we need to associate the AKS with the ACR of this way
     "podCidr": null,
     "serviceCidr": "100.0.0.0/16"
   },
-  "nodeResourceGroup": "MC_sentia-assessment_WordpressSentiaAssessment-aks_westeurope",
+
+#########   PLEASE PAY ATTENTION TO THIS SECTION WHERE THE SP SentiaAssessment IS INVOLVED ###########################
+
+  "nodeResourceGroup": "MC_sentia-assessment-_WordpressSentiaAssessment-aks_westeurope",
   "privateFqdn": null,
   "provisioningState": "Succeeded",
   "resourceGroup": "sentia-assessment",
@@ -1334,6 +1434,8 @@ is because we need to associate the AKS with the ACR of this way
     "clientId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", # APPLICATION CLIENT ID SentiaAssessment SP
     "secret": null
   },
+
+
   "tags": {
     "Environment": "testing"
   },
@@ -1344,16 +1446,44 @@ is because we need to associate the AKS with the ACR of this way
 ~/projects/sentia-assesment · (master±)
 ```
 
-Looks like that association between aks and acr is not possible from arm template
-https://github.com/MicrosoftDocs/azure-docs/issues/39508
 
->Cannot be done in an ARM template because this is a CLI client side change only. We enabled this in the CLI for customers who find it hard to understand ARM RBAC. The simple implementation behind the scenes is a specifically a simple role assignment allowing AKS to access 
+So, when I install my helm chart, the image is up and running
+
+```Events:
+  Type     Reason     Age                   From                                          Message
+  ----     ------     ----                  ----                                          -------
+  Normal   Scheduled  14m                   default-scheduler                             Successfully assigned default/wordpress-site-4-6565b8c64f-w7xvq to aks-defaultpool-34253081-vmss000000
+  Normal   Pulling    14m                   kubelet, aks-defaultpool-34253081-vmss000000  Pulling image "registryname.azurecr.io/customize_wordpress:5.2.4"
+  Normal   Pulled     14m                   kubelet, aks-defaultpool-34253081-vmss000000  Successfully pulled image "registryname.azurecr.io/customize_wordpress:5.2.4"
+  Normal   Created    14m                   kubelet, aks-defaultpool-34253081-vmss000000  Created container wordpress
+
+```
+If we do that, we don't need to reference the docker registry secret and any `imagePullSecrets` attribute in our helm chart or yaml file, our image will be pulled without reference any credentials
+
+**And now, some inshights (in addition to the output above from the `az aks update` command)**
+
+I started to fins the way to setup the association between my AKS cluster and the ACR from the ARM template, but looks like [it isn't possible](https://github.com/MicrosoftDocs/azure-docs/issues/39508) 
+
+Microsoft guys say:
+
+>Cannot be done in an ARM template because this is a CLI client side change only. 
+We enabled this in the CLI for customers who find it hard to understand ARM RBAC. 
+The simple implementation behind the scenes is a specifically a simple role assignment allowing AKS to access 
 
 So  that role assignment is performed over the service principal used to create the AKS cluster from the arm template
-so indeed, I will need to look at the permissions of the service principal
+so indeed, and then when I going to my `WordpressSentiaAssessment` container registry options, I can see that
+the `az aks update` command executed above, has created the `acrPull` role assignment to the Service Principal `SentiaAssessment` 
 
-So I am using the [SentiaAssessment](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Overview/appId/b496b133-0dbc-4a2b-8e6f-622def202432/isMSAApp/) SP to my AKS clueste
-Let's check the permissions over ACR ...
+
+
+![alt text](https://cldup.com/j6pHyRreZm.png "acrPull role")
+
+
+# ADDITIONAL NOTES:
+
+Trying to solve the 
+
+--
 
 
 ## PROBLEM 3 ..
