@@ -1254,12 +1254,19 @@ But If I take the scripts URL that Wordpress site has requesting in the image ab
 I can achieve them, under https protocol, the `.js` and `.css` files.
 
 https://site8.bgarcial.me/wp-includes/js/wp-emoji-release.min.js?ver=5.2.4
+
 https://site8.bgarcial.me/wp-includes/css/dist/block-library/style.min.css?ver=5.2.4
+
 https://site8.bgarcial.me/wp-includes/css/dist/block-library/theme.min.css?ver=5.2.4
+
 https://site8.bgarcial.me/wp-content/themes/twentynineteen/style.css?ver=1.4
+
 https://site8.bgarcial.me/wp-content/themes/twentynineteen/print.css?ver=1.4
+
 https://site8.bgarcial.me/wp-includes/css/dist/block-library/style.min.css?ver=5.2.4
+
 https://site8.bgarcial.me/wp-includes/css/dist/block-library/theme.min.css?ver=5.2.4
+
 https://site8.bgarcial.me/wp-includes/js/wp-embed.min.js?ver=5.2.4
 
 
