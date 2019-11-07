@@ -658,7 +658,8 @@ So the CI build pipeline has enabled the continuous integration trigger:
 
 ![alt text](https://cldup.com/CkTlNzeAtl.png "CI Trigger in the build pipeline")
 
-**IMPORTANT NOTE:**
+### IMPORTANT NOTE:
+
 The CI/CD workflow in this purpose is strongly related with Helm tool, which allow us to deploy applications inside 
 Kubernetes.
 
@@ -678,7 +679,7 @@ From bash tasks (in azure devops) we can navigate through the [Wordpress Helm ch
 
 Such as I mentioned, is a the continious delivery process where the environment related activities must be executed, that's why I decided to divided in two categories the release pipeline process
  
-### 5.2.1 Infrastructure Deployment
+### 5.2.1 Infrastructure Deployment Release Pipeline
 
 This CD section is given by the ARM template execution.
 I am using a [resource group deployment scope](https://docs.microsoft.com/en-us/powershell/module/az.resources/new-azresourcegroupdeployment?view=azps-3.0.0).
@@ -742,6 +743,8 @@ You can try it out [checking this link](https://4bes.nl/2019/07/11/step-by-step-
   This *Create or update resource group* will create the resource group if it does not exist, otherwise it will update
   the resources in.
 
+  **You can see this Infrastructure Release Pipeline picture in a bigger size [here](https://cldup.com/0bKdIY-rtF.png)**
+
 
 - Choose the **resource group name** and **location** where the resources will be deployed.
  ![alt text](https://cldup.com/qismuYmXRu.png "Infrastructure Release Pipeline")
@@ -757,7 +760,9 @@ You can try it out [checking this link](https://4bes.nl/2019/07/11/step-by-step-
   
   ![alt text](https://cldup.com/2K-05DcHYZ.png  "ARM Template to execute")
 
-- In **Overrride template parameters** you hould see empty `servicePrincipalClientId` and `servicePrincipalClientSecret` parameters.     
+   **You can see this Infrastructure Release Pipeline picture in a bigger size [here](https://cldup.com/2K-05DcHYZ.png)**
+
+- In **Overrride template parameters** you should see empty `servicePrincipalClientId` and `servicePrincipalClientSecret` parameters.     
   ![alt text](https://cldup.com/56FbpTnSXg.png  "ARM Template parameters")
 
   Add the pipeline variables there of this way: `$(servicePrincipalClientId)` and `$(servicePrincipalClientSecret)`
@@ -776,7 +781,7 @@ You can try it out [checking this link](https://4bes.nl/2019/07/11/step-by-step-
   
   ![alt text](https://cldup.com/8hX8lQQaeh.png  "ARM Template parameters")
 
-Just for double check, the complete parameters flags or string placed finally here is this
+Just for double check, the complete parameters flags or string placed finally here are these
 
 ```
 -location "West Europe" -vnetName "AssessmentVNetTesting" -vnetAddressPrefix "10.0.0.0/8" 
@@ -819,9 +824,13 @@ Just for double check, the complete parameters flags or string placed finally he
   
   ![alt text](https://cldup.com/r97BoTH-oF.png  "ARM Template Deployment")
 
-  After 9 minutes and 17 seconds all the resources definde in the ARM Template were deployed.
+  **You can see this ARM Template Deployment picture in a bigger size [here](https://cldup.com/r97BoTH-oF.png)**
+
+  After 9 minutes and 2 seconds all the resources definde in the ARM Template were deployed.
 
   ![alt text](https://cldup.com/Dkizc-EzW4.png  "ARM Template Deployment")
+
+  **You can see this ARM Template Deployment picture in a bigger size [here](https://cldup.com/Dkizc-EzW4.png)**
 
   So you can see in Azure portal the `sentia-assessment` resource group was created and the AKS HA cluster, MySQL, ACR and Vnets and subnets as well.
   ![alt text](https://cldup.com/7E_7jeZwBU.png  "ARM Template Deployment")
@@ -831,21 +840,68 @@ Just for double check, the complete parameters flags or string placed finally he
   ![alt text](https://cldup.com/-rcT_R7g_4.png  "ARM Template Deployment")
 
 
-### 5.2.2 Wordpress Deployment
+### 5.2.2 Wordpress Deployment Release Pipeline
 
-The Wordpress aplication is deployed here.
+The Wordpress aplication is deployed here, that's why all the activities performed are related with Kubernetes.
 
 In order to getting it up and running, is necessary to deploy several additional services, referenced in the following activities/steps:
 
-- Installing NGINX Ingress controller in its namespace
-- Installing Cert Manager in its namespace.
-- Login to Azure Container Registry
-- Setup Helm3 on the Agent Machine.
-- Creating Wordpress Database
-- Creating User inside Wordpress database and grant permissions to it.
-- Install Wordpress Helm chart in its namespace.
-- Deploying ClusterIssuers to contact LetsEncrypt
-- Creating Ingress to expose the service and get https protocol.
+#### Creating Pipeline Variables.
+The following pipeline Variables are created
+- `helmVersion`, is the version of helm used. I am using the v3.0.0-beta.5
+- `kubernetesCluster`
+- `resourceGroup`
+- `resourceGroupDev`
+
+
+![alt text](https://cldup.com/rotaWbiPFB.png  "ARM Template Deployment")
+
+- **Creating DevelopmentRelease Variable groups**
+
+Variable groups are very useful when we want to group information that is closely related with some subject
+In this case, like in the release activities goes everything that impact to a specific environment, I am creating
+a variable group for Wordpress Deployment Development Environment.
+The following variables were defined:
+
+`acr_repository`, is the URL repository created previously in [Azure Container Registry activities](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#44-azure-container-registry)
+azure_tenant
+database_host
+database_name
+database_password
+database_user
+image_tag
+new_db_passwd_user_to_be_created
+new_db_user_to_be_created
+service_principal_sentia_assessment_app_id
+service_principal_sentia_assessment_password
+wordpressEmail
+wordpressPassword
+wordpressUsername
+
+
+
+- Creating `wordpress-site-*`,`nginx` and `cert-manager` namespaces
+
+All of them are executed via Kubernetes task (interacting with kubectl command tool)
+
+https://cldup.com/bxU720YcLn.png
+
+
+- Login to ACR
+- Getting Ready Environment
+  - Downloading and installing helm version 3 on azure devops agent machine
+  - Login to azure services from `az login` command line tool 
+  - Getting AKS cluster credentials `az aks get-credentials`
+  - [Initializing and update helm chart repository](https://v3.helm.sh/docs/intro/quickstart/#initialize-a-helm-chart-repository)
+- Creating Wordpress database
+- Creating User inside Wordpress database and grant it permissions  
+- Deploying Wordpress Helm chart in `wordpress-site-*` namespace
+- Installing NGINX Ingress controller helm chart in `nginx` namespace
+- Cert-Manager Deployment
+  - Installing Cert-manager custom resources definitions
+  - Installing Cert Manager helm chart in `cert-manager` namespace.
+  - Installing Staging and Production ACME Cluster Issuers to contact to Let'sEncrypt ACME CA
+- Creating Ingress resource to expose the Wordpress service and get https protocol to it.
   
 All those activities are being deployed from the release pipeline with just pushing a button.
 
