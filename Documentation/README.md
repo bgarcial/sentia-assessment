@@ -1208,6 +1208,17 @@ When we press Install Wordpress button
 
 ![alt text](https://cldup.com/orTHBQq_Tz.png "Wordpress installation")
 
+These latest steps about Wizard Web Interface Wordpress Installation could be automated.
+The official Wordpress Helm chart [that I had started to customize](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml) has those attributes
+in order to be include in the  `sentia-assessment/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml`
+
+- `wordpressFirstName`: [Here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml#L57)
+- `wordpressLastName`: [Here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml#L62)
+- `wordpressBlogName`: [Here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml#L67)
+- `wordpressTablePrefix`: [Here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml#L72)
+- And the data [to contact to the external database](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/Kubernetes/HelmCharts/wordpress/values.yaml#L148) 
+
+
 
 ---
 
