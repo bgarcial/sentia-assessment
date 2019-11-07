@@ -148,16 +148,16 @@ extraVolumes: []
 externalDatabase:
 ## All of these values are only used when mariadb.enabled is set to false
   ## Database host
-  host: wordpresssentiaassessment-db.mysql.database.azure.com
+  host: 
 
   ## non-root Username for Wordpress Database
-  user: sentia@wordpresssentiaassessment-db
+  user: 
 
   ## Database password
-  password: "EsVMna5OSUt4Ziw2Dl"
+  password: 
 
   ## Database name
-  database: wordpresswebsite7
+  database: 
 
   ## Database port number
   port: 3306
