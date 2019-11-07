@@ -687,7 +687,7 @@ I am using a [resource group deployment scope](https://docs.microsoft.com/en-us/
 ARM templates require we supply the name resource group where we want to deploy the resources, as a part of the 
 deployment command. 
 
-**IMPORTANT**
+#### IMPORTANT
 If we want to execute the ARM template from Power shell the resource group must to exist before running the deployment.
 [Here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/README.md) some preparation Power shell execution of the ARM template used, before to execute it from the release pipeline.
 If you want to try the local Power shell approach, [you must to Install the Azure Power Shell environment](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps?view=azps-2.8.0) 
@@ -697,7 +697,7 @@ Is not the objective of the CD process the local and manual execution of the ARM
 - I am using n Azure Resource Group deployment task to deploy from Azure DevOPs the ARM template.
   Let's have a look to the task.
 
-**Pre Requisites**
+#### Pre Requisites**
 
 The [ARM template to execute](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json) use a service principal to connect with Azure cloud and create the Kubernetes cluster. Actually, this service principal data adquisition process is not being automated from the ARM template, so will be necessary create a service principal of a manual way and reference in the ARM template their `servicePrincipalClientId` and `servicePrincipalClientSecret` data.
 
@@ -773,6 +773,8 @@ You can try it out [checking this link](https://4bes.nl/2019/07/11/step-by-step-
   MySQL database. A privilege user database and password will be created from the template. 
   
   ![alt text](https://cldup.com/JmfOf8-vO7.png  "ARM Template parameters")
+  
+  
   Of course you must create  `administratorLogin` and `administratorLoginPassword` as a pipeline variables previously
   
   ![alt text](https://cldup.com/EwWP5TKr83.png  "ARM Template parameters")
@@ -848,37 +850,35 @@ In order to getting it up and running, is necessary to deploy several additional
 
 #### Creating Pipeline Variables.
 The following pipeline Variables are created
-- `helmVersion`, is the version of helm used. I am using the v3.0.0-beta.5
-- `kubernetesCluster`
-- `resourceGroup`
-- `resourceGroupDev`
+- `helmVersion`, is the version of helm used. I am using the v3.0.0-beta.5. Please read [important considerations about helm3](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#512-important-note)
+- `kubernetesCluster`, is the name of the Kubernetes cluster deployed from the ARM template [just right here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L324)
+- `resourceGroup` and `resourceGroupDev` are the names of the resource group which were created in the Infrastructure Deployment. I will use just `resourceGroupDev` here. 
+  - The other one (`resourceGroup`) is used when I want to replicate the deployment at different infrastructure deployment made.
 
 
 ![alt text](https://cldup.com/rotaWbiPFB.png  "ARM Template Deployment")
 
-- **Creating DevelopmentRelease Variable groups**
+- ### Creating DevelopmentRelease Variable groups
 
 Variable groups are very useful when we want to group information that is closely related with some subject
 In this case, like in the release activities goes everything that impact to a specific environment, I am creating
 a variable group for Wordpress Deployment Development Environment.
 The following variables were defined:
 
-`acr_repository`, is the URL repository created previously in [Azure Container Registry activities](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#44-azure-container-registry)
-azure_tenant
-database_host
-database_name
-database_password
-database_user
-image_tag
-new_db_passwd_user_to_be_created
-new_db_user_to_be_created
-service_principal_sentia_assessment_app_id
-service_principal_sentia_assessment_password
-wordpressEmail
-wordpressPassword
-wordpressUsername
-
-
+- `acr_repository`, is the URL repository created previously in [Azure Container Registry activities](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#44-azure-container-registry)
+- `azure_tenant`, is the directory ID of my Azure Active Directory. From it I can manage access to multiple subscriptions. This `azure_tenant` is necessary to get it to login from `az login` using a service principal. 
+- `database_host`, is the MySQL database hostname given from the ARM template [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L376)
+- `database_name`, is the database which will be created in this release pipeline and it will store the Wordpress site tables.
+- `database_password`, this is the password used to access to MySQL database server. It was given from the ARM template parameter [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L387) and its value was assigned
+- database_user
+- image_tag
+- new_db_passwd_user_to_be_created
+- new_db_user_to_be_created
+- service_principal_sentia_assessment_app_id
+- service_principal_sentia_assessment_password
+- wordpressEmail
+- wordpressPassword
+- wordpressUsername
 
 - Creating `wordpress-site-*`,`nginx` and `cert-manager` namespaces
 
