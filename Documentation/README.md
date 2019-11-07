@@ -547,8 +547,11 @@ These previous points are very important detail to keep in mind at the moment of
 
 ### 4.3. Azure Database for MySQL HA configuration.
 
-You can modify the HA schema for MySQL managed service. If you want to do it, you should go to the options in the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L374). Please check from the line 374 until 437 code section.
+You can modify the HA schema for MySQL managed service. If you want to do it, you should go to the options in the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/e581ca122f4da16de90f5576234d2bc9fc70bc00/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L374). 
+
+Please check from the line 374 until 437 code section.
 The MySQL configurations parameters are explained in the **[2.1. MySQL database Wordpress sites](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#21-mysql-database-wordpress-sites)**
+
 You can explore the links information provided there in order to understand the changes to do.
 
 #### 4.3.1.  Adding Azure Virtual Network Rules
@@ -1664,5 +1667,50 @@ type:
 
 ![alt text](https://cldup.com/xlZzUze5aL.png "K8s storage type")
 
+But in the `agentVMSize` for the AKS nodes I am using the `Standard_D2_v2` family which is part of **D-Series** for [general purpose](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes).
+
+But [here](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-general#dv2-series), says that in the `Dv2-series` the premium Storage is not Supported
+
+So, this condition not apply to me.
 
 
+#### IMPORTANT POINT OF FAILURE 
+
+I purposed a two Availability zones deployment inside one region architecture approach.
+
+Here in [this article](https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-multi-region) talk about the best practices for business continuity and disaster recovery in AKS:
+
+>As you manage clusters in Azure Kubernetes Service (AKS), application uptime becomes important. AKS provides high availability by using multiple nodes in an availability set.
+
+>An "Availability Set" refers to two or more Virtual Machines deployed across different Fault Domains to avoid a single point of failure.
+
+>"Fault Domain" is a collection of servers that share common resources such as power and network connectivity.
+
+>"Availability Zone” is a fault-isolated area within an Azure region, providing redundant power, cooling, and networking.
+
+Ok, I have one Availability Set which has 4 virtual machines across two Availability Zones. In the only one region context that's good. 
+
+**But what if an entire region fails?**
+
+Well the best practices article continue with:
+
+>But these multiple nodes don’t protect your system from a region failure. 
+To maximize your uptime, plan ahead to maintain business continuity and prepare for disaster recovery with:
+>- Plan for AKS clusters in multiple regions.
+>- Route traffic across multiple clusters by using Azure Traffic Manager.
+>- Use geo-replication for your container image registries.
+>- Plan for application state across multiple clusters.
+>- Replicate storage across multiple regions.
+
+So if the WestEurope region fail, the Wordpress sites, they are not going to be protected of the failure.
+
+### 7.2 MySQL managed service HA
+
+The Azure database for MySQL manage service was deployed in a HA zone redundant approach.
+According [to this article](https://azure.microsoft.com/en-us/blog/azure-sql-database-now-offers-zone-redundant-premium-databases-and-elastic-pools/), if the MySQL is deployed as a premium database tier, it will support multiple redundant replicas for each database that are automatically 
+provisioned in the same datacenter within a region
+
+The MySQL service used here, meet those requirements. You can check it [here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#21-mysql-database-wordpress-sites)
+
+So, the redundant replicas, they are going to be available from my two Availability zones in the West Europe region.
+Only in West Europe region, because I defined the MySQL deployment with a geo redundant backup disabled in the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L201)
