@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   annotations:
     # add an annotation indicating the issuer to use.
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-staging
     kubernetes.io/ingress.class: nginx 
   name: wordpress-site-6-ingress
   namespace: site-6
@@ -19,4 +19,4 @@ spec:
   tls: # < placing a host in the TLS config will indicate a cert should be created
   - hosts:
     - site6.bgarcial.me
-    secretName: letsencrypt-prod-site-6
+    secretName: letsencrypt-staging-site-6
