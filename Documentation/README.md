@@ -1523,8 +1523,6 @@ This decision is reflected [in this commit](https://github.com/bgarcial/sentia-a
 
 I say this, because in my own Helm chart `wordpress-mine` (which is actually running for this assessment), I don't have there many parameters that the official `wordpress` helm chart has, and also the structure of my own created helm chart is different to the official helm chart
 
---
-
 
 ### 6.3 Client with IP address '13.79.132.109' (Azure DevOps agent) is not allowed to connect to this MySQL server. 
 
@@ -1714,3 +1712,74 @@ The MySQL service used here, meet those requirements. You can check it [here](ht
 
 So, the redundant replicas, they are going to be available from my two Availability zones in the West Europe region.
 Only in West Europe region, because I defined the MySQL deployment with a geo redundant backup disabled in the [ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L201)
+
+### 7.3.  Estimating Availability
+
+In [this article](https://www.eventhelix.com/RealtimeMantra/FaultHandling/system_reliability_availability.htm), say
+that the availability is calculated by modeling the system as an interconnection of parts in series and parallel. 
+
+>The following rules are used to decide if components should be placed in series or parallel:
+>- If failure of a part leads to the combination becoming inoperable, the two parts are considered to be operating in series
+
+This means that 
+>the combined system is operational only if both Part X and Part Y are available. 
+> From this it follows that the combined availability is a product of the availability of the two parts.
+
+So, my analysis with this availability with components in series is that maybe I can't avoid to compare the two parts that they are talking here with the two availability zones defined.
+I've mentioned this because in case of one of the two availability zones fail, the components (AKS cluster, MySQL and the Vnets and subnets) will continue operative in the other availability zone, according to the SLA explained for the Virtual Machines Scale sets and MySQL managed service.
+The Vnet and subnet, they have cross availability zones scope.
+
+So, I would say that the high availability approach addressed here, is not operating in a series schema.
+
+I tried to understand the equation formula that article has referenced to series schema
+
+**A = Ax Ay**
+
+>The implications of the above equation are that the combined availability of two components in series is always lower than the availability of its individual components. 
+
+Ok I think this is a logical sentence, because the serie schema I think it creates dependency between the parts, in the opposite way an entity isolated has more availability operating by itself.
+
+In the case of my Availability zones defined, as a far I know, those are independents, and the components, (AKS cluster, MySQL and the Vnets and subnets) are replicated in these two zones.
+
+Also the table that they show about downtime and availability for individual components and the series combination make sense about the affirmation that I say, due to the some low availability of one of the parts affect the general  availability of the system, and in my case if one azone fails, the other take over about operations.
+
+**Maybe this is a very basic analysis or very simple. Maybe this cannot be considered as an analysis.**
+
+- In the other side, the article mentioned **the parallel operation schema**
+
+
+>If failure of a part leads to the other part taking over the operations of the failed part, the two parts are considered to be operating in parallel.
+
+>Two parts are considered to be operating in parallel if the combination is considered failed when both parts fail
+
+This kind of affirmation is closely related with that I mentioned [here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#important-point-of-failure)
+
+I mean my availablity could be considered a parallel schema due to that I have two availanbilty zones and both of them have to fail in order to my system fail entirely.
+
+Also they say:
+
+>The combined system is operational if either is available. 
+
+If at least I have one zone available, the Wordpress sites will be up and running
+
+They reference the parallel scheme equation:
+
+**A = 1-(1-Ax)^2**
+
+>The implications of the above equation are that the combined availability of two components in parallel is always much higher than the availability of its individual components.
+
+Well, here come to my mind the following question:
+
+**How could be the Wordpress sites availability (measure in uptime and downtime) when I have only 1 availability zone?**
+**How could be the Wordpress sites availability (measure in uptime and downtime) when I have 2 availability zones?**
+
+I am not sure how address this question under mathematical perspective, that I would say is that this Wordpress architecture approach would have more reliability and performance and uptime with the AKS and MySQL replication across two availability zones, instead of they are operating in only one. 
+I say this because if I there were only 1 availability zone, the Load Balancer will redirect all the traffic to nly one zone, which will affect the performance, and it will create some kind of bottlenecks in the system.
+
+I have to say as a conclusion, that this kind of "analysis" that I did thinking about availability as series and parallel schema is very poor. I have to get into a few more in details, read more and also learn about mathematical perspective.
+
+
+
+
+
+
