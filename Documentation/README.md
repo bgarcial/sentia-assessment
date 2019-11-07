@@ -369,7 +369,7 @@ So, I decided:
 - **Use 2 Availability Zones** for master profile ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L334)) and **2 availability zones** for agentpool profile ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L350))
 In this approach solution, AKS HA was used across two availability zones, due to the customer had two servers (hosting application environment) and two MySQL servers to achieve HA in their existing approach.
 
-- **Node count**: Is the number of nodes in the node pool defined to k8s.
+- ##### Node count: Is the number of nodes in the node pool defined to k8s.
   >[To ensure HA](https://github.com/Azure/aks-engine/blob/master/examples/kubernetes-zones/README.md#availability-zones), each profile (master and node) must define at least two nodes per zone. For example, an agent pool profile with 2 zones must have at least 4 nodes total.
 
   The agentpool profile (node components) has 4 nodes in total ([ARM template](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json#L343))
@@ -1578,8 +1578,39 @@ I did prefer this, because according to the documentation refered those IP addre
 
 ---
 
-## 7. ABOUT High Availability Approaches and how to test it.
+## 7. About High Availability in my solution 
 
-HA means different things to different people. I prefer to approach it with math,
-    defining it numerically and based on facts.
-A good inspirational reading about System Availability and Reliability you can find here: https://www.eventhelix.com/RealtimeMantra/FaultHandling/system_reliability_availability.htm.
+HA means different things to different people. I prefer to approach it with math, defining it numerically and based on facts.
+
+
+A good inspirational reading about System Availability and Reliability you can find here: https://www.eventhelix.com/RealtimeMantra/FaultHandling/system_reliability_availability.htm
+
+
+### 7.1. Azure Kubernetes Service
+
+From Novemer 4th, in the Microsoft Ignite was announced that [the Availability Zone support for AKS](https://azure.microsoft.com/en-us/updates/azure-kubernetes-service-aks-support-for-azure-availability-zones-is-now-available/?utm_source=samcogan) has passed from preview to be considered now as an available feature in Azure
+
+Talk about HA IN AKS in the Azure context, is talk about the availability of the agent nodes in the cluster. It is covered by the Virtual Machines SLA according to [this link](https://azure.microsoft.com/en-au/support/legal/sla/kubernetes-service/v1_0/).
+
+In my case of the Virtual Machines Scale sets which support the nodes in the AKS cluster
+
+- If I go to the
+![alt text](https://cldup.com/7CQ3kO9dwp.png "K8s nodepool")
+
+- If I go to the node-0. it was located in the **West Europe Zone 1.**
+
+![alt text](https://cldup.com/pV1hhS5E6g.png "K8s node-0")
+
+- If I go to the node-1. it was located in the **West Europe Zone 2.**
+
+![alt text](https://cldup.com/IIhaFEzFiP.png "K8s node-1")
+
+- The node-2 is in **West Europe Zone 1.**
+
+![alt text](https://cldup.com/-0OJJmILjO.png "K8s node-2")
+
+- And the node-3 is in **West Europe Zone 2.**
+
+![alt text](https://cldup.com/X5o_UmdpJJ.png "K8s node-2")
+
+Ok, this is not new, due to 
