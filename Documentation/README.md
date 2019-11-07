@@ -1310,7 +1310,10 @@ I've installed the plugin, but the issue still persist. (I did it on site4.bgarc
 Some forums say that it is a common problem when we have wordpress installation behind some load balancers, and I am in this side, and I think that I have to continue working in the `RewriteEngine` rule 
 
 Maybe not in the `/etc/apache2/apache2.conf` but yes in `/etc/apache2/sites-available/000-default.conf`
-Also maybe keep in mind the apache mod ssl actions ..
+Also maybe keep in mind the apache mod ssl actions ...
+
+Also [this article](https://www.nginx.com/blog/9-tips-for-improving-wordpress-performance-with-nginx/) about how to improve performance to Wordpress applications with nginx looks interesting
+
 
 Note: At the moment of I realize of this alternative actions that I describe to solve the problem, I had to 
 stop to solve this issue in order to advance in this documentation process.
