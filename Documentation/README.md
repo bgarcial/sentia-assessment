@@ -697,7 +697,7 @@ Is not the objective of the CD process the local and manual execution of the ARM
 - I am using n Azure Resource Group deployment task to deploy from Azure DevOPs the ARM template.
   Let's have a look to the task.
 
-#### Pre Requisites**
+#### Pre Requisites
 
 The [ARM template to execute](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach/testing.json) use a service principal to connect with Azure cloud and create the Kubernetes cluster. Actually, this service principal data adquisition process is not being automated from the ARM template, so will be necessary create a service principal of a manual way and reference in the ARM template their `servicePrincipalClientId` and `servicePrincipalClientSecret` data.
 
