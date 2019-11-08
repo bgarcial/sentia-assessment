@@ -163,6 +163,7 @@ as a improve in the current architecture approach, due to time reasons to implem
 
 
 **IMPORTANT NOTE**
+
 The described above features are several benefits provide by Kubernetes to manage our Wordpress deployments 
 Due to time reasons, in this approach solution only will be addressed the namespace scope per customer deployment, which opens the door to all other Network policies recommendations/benefits.
 
@@ -1283,14 +1284,6 @@ Some analysis here is that nginx send the request using https, but looks like Ap
 
 - **Criticallity**: It's a very critical issue.
 
-Let's agree on the section name and subsections:
-* Name: Risks mitigation;
-   * Table of risks:
-       Header: Id|Name|Description|Criticallity
-   * Table of mitigations:
-       Header: Id|Status<Open, 
-       Closed>|Mitigation status description.
-
 #### 6.1.1 Possible mitigations. 
 
 - **Current Status**: Open.
@@ -1506,7 +1499,7 @@ That service account creation detail leads me to think that maybe it was interfe
 
 I cannot to be entirely sure of this, but I deployed a new infrastructure from scratch and I executed my own Helm chart and the wordpress image was pulled of a successfully way, without I had to setup the association between the als cluster and ACR documented here in this issue.
 
-### SOME HINT TO TRY IN THE FUTURE 
+### SOME HINT TO TRY IN THE SHORT FUTURE 
 
 These comments here could be related with the first and most critical issue [presented here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#61--wordpress-sites-are-not-able-to-serve-stylesheets-and-other-assets-files)
 
@@ -1817,9 +1810,81 @@ A tentative approach using Amazon S3 buckets and some content delivery network s
 
 ---
 
-## 8. Improve opportunities in the entire solution
+## 8. Improve recommendations in the entire solution
+
+I will gather here several actions which can be performed at different levels or components in the architecture in order to improve the security and performance of the solution.
+
+The following actions or recomendations already were referenced along this document, but I consider gathering them here to access to them more easily.
+
+I will mention the problem or possible issue situation and the way to tackle it.
+
+- ### Problem or security issue situation
+
+Containers can talk to any other container in the network, nodes in the cluster can talk to any other container in the network and vice-versa
 
 
+#### Solution - Define Network policies 
+
+Define rules, which specific traffic is allowed to the selected pods
+
+>By default, pods are non-isolated; they accept traffic from any source. 
+Each node in the cluster has a component called kube-proxy that is in 
+charge of routing the traffic from anywhere in the cluster to the target Pod. 
+Once there is any NetworkPolicy in a namespace selecting a particular pod, that pod will reject any connections that are not allowed by any NetworkPolicy.
+
+Restrict the communication between namespaces and pods could be useful to clock traffic, sometimes we don't want traffic directly in our applications or we want to allow only all the traffic comin from the same namespace the pod deployed to.
+
+For instance, I don't want that Wordpress deployments in customer site A namespace accidentally send traffic to other Wordpress sites in other namespaces
+
+Some lectures
+- https://docs.microsoft.com/en-us/azure/aks/use-network-policies
+- https://github.com/ahmetb/kubernetes-network-policy-recipes/blob/master/04-deny-traffic-from-other-namespaces.md
+- https://www.youtube.com/watch?v=131_TIa_ftI&t=1s
+
+- ### Problem  - Scalability Issue - Availability situation
+
+It has to do with the usage data resources under CPU cycles and memory perspective
+
+What if some container or pod is overloaded with traffic? 
+Maybe the pods could be going down or start to restart itself, or even become to does not accept traffic in some point.
+What if some pod is overloaded with more than 80% of CPU utilization?
+How Kubernetes should react to this situation?
+
+#### Solution - ReplicaSets and Horizontal Pod Auto Scaling process
+
+Kubernetes allow us evaluate these kind of situations through monitoring tools 
+like [metrics-server](https://github.com/helm/charts/tree/master/stable/metrics-server) 
+inside our entire cluster.
+
+I can use [Horizontal Pod AutoScaler](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) to automatically scale the number of pods in our Wordpress deployment based on observed CPU utilization as a defined metric.
+
+Some lectures
+
+- https://www.magalix.com/blog/kubernetes-replicaset-101?utm_sq=g7aa4dehjz
+- https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics
+- https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/
+
+
+- ### Problem/ Situation - Take advance of a better way Wordpress Helm chart
+
+#### Solution
+
+[Here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#some-hint-to-try-in-the-future), and [here](https://github.com/bgarcial/sentia-assessment/tree/master/Documentation#additional-notes) I am exposing some reasons to customize of a better way the Wordpress Helm chart, using the Official Wordpress Helm chart instead of my own helm chart.
+
+
+
+- ### Situation - Deploy ARM template at subscription level
+
+I've deployed the ARM template at resource group leve, it means that all the resources created from ARM template only will be inside a resource group.
+Really this is not a critical problem, but maybe I can create many resources along many resource groups.
+
+At the begginning of this project I tried a subscription level approach just right [here](https://github.com/bgarcial/sentia-assessment/blob/master/Deployments/ARMTemplates/Infrastructure/New-AzDeploymentApproach/SentiaWordpressDeployment.json)
+
+But I have some problems to attach the AKS cluster inside the Vnet created.
+I am explaining the problem [here](https://github.com/bgarcial/sentia-assessment/tree/master/Deployments/ARMTemplates/Infrastructure/New-AzDeploymentApproach)
+
+And then after that, I decided to change to deploy all the resources (AKS cluster, MySQL, ACR and Vnets) at resource group level.
+This approach is presented [here](https://github.com/bgarcial/sentia-assessment/tree/master/Deployments/ARMTemplates/Infrastructure/AzResourceGroupDeploymentApproach) and is working. 
 
 
 
