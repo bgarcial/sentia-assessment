@@ -182,6 +182,7 @@ So, the points 2.1 and 2.2 are oriented to keep and improve the high availabilit
 According to it, this first high level perspective HA diagram is presented, keeping in mind the MySQL and AKS contexts deployments.
 
 ![alt text](https://cldup.com/7P1LGsz4Yg.jpg "HA approach")
+
 In this approach solution two availability zones will be created. 
 *Screenshot taken from Google maps and resources from draw.io*
 
