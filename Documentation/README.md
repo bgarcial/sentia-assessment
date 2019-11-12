@@ -1787,9 +1787,9 @@ Those are just ideas about how can I test the performance and availability.
 Due to time reasons, these ideas are not being addressed here.
 
 
-### 7.5. Caching media and assets files to Amazon S3
+### 7.5. Caching media and assets files to Azure Blob Storage and Using Azure CDN 
 
-One good idea could be store all the files that we usually store in the Wordpress media library (images, videos, audio, pdf documents), store them in some cloud storage service like Amazon S3. Even the assets like CSS and Javascript files.
+One good idea could be store all the files that we usually store in the Wordpress media library (images, videos, audio, pdf documents), store them in Azure blob storage service. Even the assets like CSS and Javascript files.
 
 This could be give us the following benefits:
 
@@ -1798,16 +1798,15 @@ Kubernetes cluster wordpress applications  no longer has to deliver media files,
 
 - Easy migration: The media files are not being associated with the Wordpress sites, so is easier to move the WordPress sites without care about content. Basically we just moving the PHP files, which takes up almost no space.
 
-- Connect the S3 bucket to some CDN solution in order to distribute the files in locations around the globe.
-If I have some Wordpress S3 plugin, it automatically copies or move the files in the media content gallery to Amazon s3
-and then the S3 could transfer the files to the CDN.
-The Wordpress sites could serve the files on S3 or use the CDN connected to S3 bucket to delivering content of an optimal way.
+- Connect the blob storage  to Azure CDN solution in order to distribute the files in locations around the globe.
+I can enable [Azure content delivery to cache content](https://docs.microsoft.com/en-us/azure/cdn/cdn-create-a-storage-account-with-cdn) from storage account where the blob storage is, to copy or move the files from the media content gallery to the blob storage and also to the CDN.
+The Wordpress sites could serve the files from the blob storage and even sometimes use the CDN connected to blob storage to delivering content of an optimal way.
 
-There are plenty of Amazon S3 plugins for Wordpress [like this](https://wordpress.org/plugins/amazon-s3-and-cloudfront)
+There is this Azure Storage for Wordpress [like this](https://wordpress.org/plugins/windows-azure-storage/)
 
 A tentative approach using Amazon S3 buckets and some content delivery network solution.
 
-![alt text](https://cldup.com/9Cd2Q2x3rh.jpg "Allow access to MySQL server from Azure Services")
+![alt text](https://cldup.com/JynZUjTkXR.jpg "Using Blob Storage and Azure CDN")
 
 ---
 
